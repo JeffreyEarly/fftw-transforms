@@ -8,10 +8,14 @@ arguments
     options.oceanKitRoot (1,1) string = ""
     options.outputDirectory (1,1) string = ""
     options.runId (1,1) string = ""
+    options.sourceVersion (1,1) string = "0.1.0"
     options.candidateVersion (1,1) string = "1.0.0"
+    options.bumpType (1,1) string = "major"
     options.requireCanonicalPlatform (1,1) logical = true
     options.candidateSourceCommit (1,1) string = ""
 end
+
+validateReleaseConfiguration(options.sourceVersion,options.candidateVersion,options.bumpType);
 
 toolDirectory = string(fileparts(mfilename('fullpath')));
 if strlength(options.repositoryRoot) == 0
@@ -60,7 +64,7 @@ try
     addpath(fullfile(options.repositoryRoot,"tools","benchmarks"));
     addpath(fullfile(options.repositoryRoot,"tools","benchmarks","UnitTests"));
     result.package.authoring = packageIdentity(options.repositoryRoot);
-    requireEqual(result.package.authoring.version,"0.1.0",'FFTWTransforms:ReleaseGateAuthoringVersion','The tracked authoring version must remain 0.1.0.');
+    requireEqual(result.package.authoring.version,options.sourceVersion,'FFTWTransforms:ReleaseGateAuthoringVersion','The tracked authoring version does not match sourceVersion.');
     authoringFiles = applicableAuthoringTests(options.repositoryRoot);
     cd(options.repositoryRoot);
     result.tests.authoring = runTestFiles(authoringFiles);
@@ -75,7 +79,7 @@ try
     runCommand(command,'FFTWTransforms:ReleaseGateArchiveFailed');
     untar(archivePath,archiveRoot);
     archivedPackage = packageIdentity(archiveRoot);
-    requireEqual(archivedPackage.version,"0.1.0",'FFTWTransforms:ReleaseGateArchiveVersion','The archived source did not retain version 0.1.0.');
+    requireEqual(archivedPackage.version,options.sourceVersion,'FFTWTransforms:ReleaseGateArchiveVersion','The archived source did not retain sourceVersion.');
 
     activeStage = "export";
     oceanKitRoot = resolveOceanKitRoot(options.repositoryRoot,options.oceanKitRoot);
@@ -86,7 +90,7 @@ try
     result.exporter.sha256 = fileSHA256(exporterPath);
     addpath(fullfile(oceanKitRoot,"tools"),'-begin');
     addpath(fullfile(archiveRoot,"tools"),'-begin');
-    ci_release(rootDir=archiveRoot,bumpType="major",notes="FFTWTransforms 1.0.0 release candidate",shouldBuildWebsiteDocumentation=true,shouldPackageForDistribution=true);
+    ci_release(rootDir=archiveRoot,bumpType=options.bumpType,notes="FFTWTransforms " + options.candidateVersion + " release candidate",shouldBuildWebsiteDocumentation=true,shouldPackageForDistribution=true);
     exportRoot = fullfile(archiveRoot,"dist","FFTWTransforms-" + options.candidateVersion);
     if ~isfolder(exportRoot)
         error('FFTWTransforms:ReleaseGateExportMissing','OceanKit did not create %s.',exportRoot);
@@ -100,7 +104,7 @@ try
     if ~result.export.hygiene.passed
         error('FFTWTransforms:ReleaseGateExportHygiene','The pre-build export contains authoring or generated files.');
     end
-    requireEqual(packageIdentity(options.repositoryRoot).version,"0.1.0",'FFTWTransforms:ReleaseGateManifestChanged','The real authoring manifest was modified.');
+    requireEqual(packageIdentity(options.repositoryRoot).version,options.sourceVersion,'FFTWTransforms:ReleaseGateManifestChanged','The real authoring manifest was modified.');
 
     activeStage = "clean-export-tests";
     clear('fftw_r2c','fftw_r2r');
@@ -164,7 +168,9 @@ result.status = "running";
 result.runId = options.runId;
 result.generatedAtUTC = utcTimestamp;
 result.completedAtUTC = "";
+result.sourceVersion = options.sourceVersion;
 result.candidateVersion = options.candidateVersion;
+result.bumpType = options.bumpType;
 result.candidateSourceCommit = options.candidateSourceCommit;
 result.environment = collectEnvironment;
 result.environment.canonicalPlatformRequired = options.requireCanonicalPlatform;
@@ -183,6 +189,18 @@ result.failure = [];
 result.artifacts.directory = runDirectory;
 result.artifacts.json = "release-gate.json";
 result.artifacts.markdown = "summary.md";
+end
+
+function validateReleaseConfiguration(sourceVersion,candidateVersion,bumpType)
+if bumpType == "none"
+    requireEqual(candidateVersion,sourceVersion,'FFTWTransforms:ReleaseGateVersionConfiguration','A no-bump gate requires candidateVersion to equal sourceVersion.');
+elseif bumpType == "major"
+    source = matlab.mpm.Version(sourceVersion);
+    expected = string(matlab.mpm.Version(source.Major + 1,0,0));
+    requireEqual(candidateVersion,expected,'FFTWTransforms:ReleaseGateVersionConfiguration','candidateVersion does not match the requested major bump.');
+else
+    error('FFTWTransforms:ReleaseGateBumpType','Release-gate bumpType must be "major" or "none".');
+end
 end
 
 function environment = collectEnvironment()

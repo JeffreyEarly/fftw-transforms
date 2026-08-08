@@ -63,7 +63,11 @@ jobs:
           command: >-
             addpath("tools"); addpath("tools/benchmarks"); addpath("tools/release-gates");
             build_website_documentation(rootDir=pwd);
-            gate = runFFTWTransformsReleaseGate(oceanKitRoot=fullfile(pwd,"OceanKit"),outputDirectory=string(tempname),runId="portable-ci",requireCanonicalPlatform=false);
+            sourceVersion = string(matlab.mpm.Package(pwd).Version);
+            if sourceVersion == "0.1.0"; candidateVersion = "1.0.0"; bumpType = "major";
+            elseif sourceVersion == "1.0.0"; candidateVersion = "1.0.0"; bumpType = "none";
+            else; error("FFTWTransforms:UnexpectedCIVersion","Portable CI does not recognize source version %s.",sourceVersion); end;
+            gate = runFFTWTransformsReleaseGate(oceanKitRoot=fullfile(pwd,"OceanKit"),outputDirectory=string(tempname),runId="portable-ci",sourceVersion=sourceVersion,candidateVersion=candidateVersion,bumpType=bumpType,requireCanonicalPlatform=false);
             assert(gate.status == "passed"); fprintf("OceanKit exporter commit is %s\n",gate.exporter.commit);
             results = runtests({'UnitTests/TestPackageScaffold.m','UnitTests/TestFFTWBackendPortable.m','tools/benchmarks/UnitTests/TestFFTWBenchmarkHistory.m','tools/release-gates/UnitTests/TestFFTWTransformsReleaseGate.m'});
             assertSuccess(results)
