@@ -60,7 +60,13 @@ jobs:
       - name: Run portable package and exported-snapshot gates
         uses: matlab-actions/run-command@v2
         with:
-          command: addpath("tools"); addpath("tools/benchmarks"); addpath("tools/release-gates"); build_website_documentation(rootDir=pwd); gate = runFFTWTransformsReleaseGate(oceanKitRoot=fullfile(pwd,"OceanKit"),outputDirectory=string(tempname),runId="portable-ci",requireCanonicalPlatform=false); assert(gate.status == "passed"); fprintf("OceanKit exporter commit: %s\n",gate.exporter.commit); results = runtests({'UnitTests/TestPackageScaffold.m','UnitTests/TestFFTWBackendPortable.m','tools/benchmarks/UnitTests/TestFFTWBenchmarkHistory.m','tools/release-gates/UnitTests/TestFFTWTransformsReleaseGate.m'}); assertSuccess(results)
+          command: >-
+            addpath("tools"); addpath("tools/benchmarks"); addpath("tools/release-gates");
+            build_website_documentation(rootDir=pwd);
+            gate = runFFTWTransformsReleaseGate(oceanKitRoot=fullfile(pwd,"OceanKit"),outputDirectory=string(tempname),runId="portable-ci",requireCanonicalPlatform=false);
+            assert(gate.status == "passed"); fprintf("OceanKit exporter commit is %s\n",gate.exporter.commit);
+            results = runtests({'UnitTests/TestPackageScaffold.m','UnitTests/TestFFTWBackendPortable.m','tools/benchmarks/UnitTests/TestFFTWBenchmarkHistory.m','tools/release-gates/UnitTests/TestFFTWTransformsReleaseGate.m'});
+            assertSuccess(results)
 
       - name: Verify artifact-only commit discipline
         shell: bash
@@ -68,8 +74,9 @@ jobs:
           artifact="$(find tools/release-gates/results -name release-gate.json -type f -print -quit)"
           test -n "$artifact"
           candidate="$(jq -r .candidateSourceCommit "$artifact")"
-          test "$(git rev-parse HEAD^)" = "$candidate"
-          unexpected="$(git diff --name-only HEAD^ HEAD | grep -v '^tools/release-gates/results/' || true)"
+          artifact_commit="$(git log -1 --format=%H -- "$artifact")"
+          test "$(git rev-parse "$artifact_commit^")" = "$candidate"
+          unexpected="$(git diff --name-only "$candidate" "$artifact_commit" | grep -v '^tools/release-gates/results/' || true)"
           test -z "$unexpected"
 
       - name: Verify generated documentation is current

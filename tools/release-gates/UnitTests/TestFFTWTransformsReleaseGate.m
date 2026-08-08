@@ -29,13 +29,12 @@ classdef TestFFTWTransformsReleaseGate < matlab.unittest.TestCase
                 testCase.verifyEqual(TestFFTWTransformsReleaseGate.fileSHA256(fullfile(root,record.path)),string(record.sha256));
             end
 
-            head = TestFFTWTransformsReleaseGate.gitValue(root,"rev-parse HEAD");
-            if head ~= string(artifact.candidateSourceCommit)
-                parent = TestFFTWTransformsReleaseGate.gitValue(root,"rev-parse HEAD^");
-                testCase.verifyEqual(parent,string(artifact.candidateSourceCommit));
-                changed = splitlines(strip(TestFFTWTransformsReleaseGate.gitValue(root,"diff --name-only HEAD^ HEAD")));
-                testCase.verifyTrue(all(startsWith(changed,"tools/release-gates/results/")));
-            end
+            relativeArtifactPath = replace(string(artifactPath),string(root)+filesep,"");
+            artifactCommit = TestFFTWTransformsReleaseGate.gitValue(root,"log -1 --format=%H -- " + relativeArtifactPath);
+            parent = TestFFTWTransformsReleaseGate.gitValue(root,"rev-parse " + artifactCommit + "^");
+            testCase.verifyEqual(parent,string(artifact.candidateSourceCommit));
+            changed = splitlines(strip(TestFFTWTransformsReleaseGate.gitValue(root,"diff --name-only " + parent + " " + artifactCommit)));
+            testCase.verifyTrue(all(startsWith(changed,"tools/release-gates/results/")));
         end
     end
 
