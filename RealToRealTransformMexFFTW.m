@@ -4,9 +4,18 @@ classdef RealToRealTransformMexFFTW < RealToRealTransform
     % New code should construct RealToRealTransform directly. This class
     % translates the legacy dim option and delegates all behavior to the
     % production bundled-FFTW implementation.
+    %
+    % - Topic: Compatibility
+    % - Declaration: classdef RealToRealTransformMexFFTW < RealToRealTransform
 
     methods
         function self = RealToRealTransformMexFFTW(sz,options)
+            % Create a compatibility wrapper around RealToRealTransform.
+            %
+            % - Topic: Compatibility
+            % - Parameter sz: Positive integer dimensions of the physical array.
+            % - Parameter dim: Legacy single transform dimension option.
+            % - Returns self: Configured compatibility transform.
             arguments
                 sz (1,:) double {mustBeInteger,mustBePositive}
                 options.dim (1,1) double {mustBeInteger,mustBePositive} = 1
@@ -23,6 +32,10 @@ classdef RealToRealTransformMexFFTW < RealToRealTransform
 
     methods (Static)
         function makeMexFiles(fftwlibpath)
+            % Build the production real-to-real backend.
+            %
+            % - Topic: Compatibility
+            % - Parameter fftwlibpath: FFTW-compatible dynamic library path.
             arguments
                 fftwlibpath (1,1) string = fullfile(matlabroot,'bin',computer('arch'),'libmwfftw3.3.dylib')
             end

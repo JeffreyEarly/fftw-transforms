@@ -6,9 +6,10 @@ arguments
 end
 
 sourceDirectory = fileparts(mfilename('fullpath'));
+paths = fftwBenchmarkPaths;
 sourcePath = fullfile(sourceDirectory,"fftw_ownership_benchmark.cpp");
 bundledLibrary = fullfile(matlabroot,"bin",computer('arch'),"libmwfftw3.3.dylib");
-includeArgument = "-I" + sourceDirectory;
+includeArgument = "-I" + paths.runtimeSourceDirectory;
 
 clear fftw_ownership_benchmark_bundled
 mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_ownership_benchmark_bundled',includeArgument,sourcePath,bundledLibrary);
@@ -23,8 +24,8 @@ if options.shouldBuildNative
     engineBuild = buildFFTWEngineBenchmarkMex(shouldBuildNative=true,shouldBuildBundledAndVDSP=false,nativeBuildDirectory=options.nativeBuildDirectory);
     native = engineBuild.native;
     clear fftw_ownership_benchmark_native
-    nativeIncludeArgument = "-I" + native.includeDirectory;
-    mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_ownership_benchmark_native',nativeIncludeArgument,sourcePath,native.threadLibrary,native.baseLibrary);
+    nativeIncludeArguments = ["-I" + native.includeDirectory "-I" + paths.runtimeSourceDirectory];
+    mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_ownership_benchmark_native',nativeIncludeArguments{:},sourcePath,native.threadLibrary,native.baseLibrary);
     build.native = native;
     build.native.module = "fftw_ownership_benchmark_native";
     build.native.status = "built";

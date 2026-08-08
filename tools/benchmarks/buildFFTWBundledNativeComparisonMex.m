@@ -5,10 +5,11 @@ arguments
 end
 
 sourceDirectory = fileparts(mfilename('fullpath'));
+paths = fftwBenchmarkPaths;
 build.ownership = buildFFTWMexOwnershipBenchmark(shouldBuildNative=true,nativeBuildDirectory=options.nativeBuildDirectory);
 
 bundledLibrary = fullfile(matlabroot,"bin",computer('arch'),"libmwfftw3.3.dylib");
-includeArgument = "-I" + sourceDirectory;
+includeArgument = "-I" + paths.runtimeSourceDirectory;
 clear fftw_engine_benchmark_bundled
 mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_engine_benchmark_bundled',includeArgument,fullfile(sourceDirectory,'fftw_engine_benchmark.cpp'),bundledLibrary);
 

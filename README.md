@@ -25,6 +25,26 @@ end
 uses the active MATLAB installation's bundled FFTW library and returns the same
 structured capability record whether the build succeeds or is unavailable.
 
+## Transform classes
+
+`RealToComplexTransform` stores only the nonredundant half spectrum. The final
+ordered transform dimension is compressed, so `dims=[2 1]` produces half-x
+storage and `dims=[1 2]` produces half-y storage. FFTW inverse results are
+unnormalized; multiply them by the transform's `scaleFactor`.
+
+`RealToRealTransform` implements normalized DCT-I and DST-I transforms for real
+or interleaved-complex arrays. DCT-I preserves the physical length. DST-I omits
+the two physical endpoints from the coefficient array, ignores forward input
+endpoints, and restores exact zero inverse endpoints.
+
+Allocating calls return MATLAB-managed arrays. Caller-preallocated outputs must
+be reassigned. A preserving complex-to-real inverse copies the half spectrum
+once, while the destructive inverse avoids an explicit spectrum copy for a
+uniquely owned input; both its spectrum and real output must be reassigned.
+
+See the [transform contracts](Documentation/WebsiteDocumentation/transforms.md)
+for examples and ownership details.
+
 ## Package status
 
 FFTWTransforms is being prepared for its 1.0 release:
@@ -34,9 +54,10 @@ FFTWTransforms is being prepared for its 1.0 release:
 3. preserve benchmark provenance and validate an exported package; and
 4. publish `FFTWTransforms 1.0.0` through OceanKit's shared release workflow.
 
-The experimental gateways, benchmark harnesses, and historical `stash` content
-remain in the authoring repository while that separation is completed. They are
-not a commitment to the 1.0 runtime API.
+Experimental gateways, benchmark harnesses, canonical results, exploratory
+scripts, and historical `stash` content are quarantined under
+`tools/benchmarks`. They remain available for authoring and provenance work but
+are not part of the runtime API or exported package.
 
 ## History
 

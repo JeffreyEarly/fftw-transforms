@@ -11,6 +11,7 @@ classdef TestFFTWBundledNativeComparison < matlab.unittest.TestCase
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
             addpath(fftwDirectory);
+            addpath(repositoryRoot);
 
             previousPlanner = string(fftw('planner'));
             previousWisdom = fftw('dwisdom');
@@ -106,6 +107,7 @@ classdef TestFFTWBundledNativeComparison < matlab.unittest.TestCase
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
             addpath(fftwDirectory);
+            addpath(repositoryRoot);
 
             previousPlanner = string(fftw('planner'));
             previousWisdom = fftw('dwisdom');
@@ -134,7 +136,7 @@ classdef TestFFTWBundledNativeComparison < matlab.unittest.TestCase
         function [fftwDirectory,repositoryRoot] = repositoryPaths()
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
-            repositoryRoot = fileparts(fileparts(fileparts(fftwDirectory)));
+            repositoryRoot = fileparts(fileparts(fftwDirectory));
         end
 
         function writeIssue38Fixture(path)

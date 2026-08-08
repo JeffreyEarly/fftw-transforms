@@ -7,7 +7,8 @@ arguments
 end
 
 sourceDirectory = fileparts(mfilename('fullpath'));
-includeArgument = "-I" + sourceDirectory;
+paths = fftwBenchmarkPaths;
+includeArgument = "-I" + paths.runtimeSourceDirectory;
 bundledLibrary = fullfile(matlabroot,"bin",computer('arch'),"libmwfftw3.3.dylib");
 
 build.bundled.module = "fftw_engine_benchmark_bundled";
@@ -38,8 +39,8 @@ build.native.reason = "The bundled FFTW threshold result has not requested the n
 if options.shouldBuildNative
     native = buildNativeFFTW(options.nativeBuildDirectory);
     clear fftw_engine_benchmark_native
-    nativeIncludeArgument = "-I" + native.includeDirectory;
-    mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_engine_benchmark_native',nativeIncludeArgument,fullfile(sourceDirectory,'fftw_engine_benchmark.cpp'),native.threadLibrary,native.baseLibrary);
+    nativeIncludeArguments = ["-I" + native.includeDirectory "-I" + paths.runtimeSourceDirectory];
+    mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_engine_benchmark_native',nativeIncludeArguments{:},fullfile(sourceDirectory,'fftw_engine_benchmark.cpp'),native.threadLibrary,native.baseLibrary);
     build.native = native;
     build.native.module = "fftw_engine_benchmark_native";
     build.native.status = "built";

@@ -3,7 +3,6 @@ classdef TestRealToRealTransform < matlab.unittest.TestCase
         function buildBackend(testCase)
             fftwDirectory = TestRealToRealTransform.fftwDirectory;
             testCase.applyFixture(matlab.unittest.fixtures.PathFixture(fftwDirectory));
-            addpath(fullfile(TestRealToRealTransform.repositoryRoot,'Matlab','Spectral'));
             RealToRealTransform.makeMexFiles;
         end
     end
@@ -155,12 +154,18 @@ classdef TestRealToRealTransform < matlab.unittest.TestCase
 
     methods (Static, Access=private)
         function [forwardMatrix,backMatrix] = referenceMatrices(n,transformType)
+            indices = 0:(n-1);
             if transformType == "cosine"
-                forwardMatrix = CosineTransformForwardMatrix(n);
-                backMatrix = CosineTransformBackMatrix(n);
+                forwardMatrix = (2/(n-1))*cos(pi*(indices.')*indices/(n-1));
+                forwardMatrix([1 end],:) = forwardMatrix([1 end],:)/2;
+                forwardMatrix(:,[1 end]) = forwardMatrix(:,[1 end])/2;
+                forwardMatrix(1,:) = 2*forwardMatrix(1,:);
+                backMatrix = cos(pi*(indices.')*indices/(n-1));
+                backMatrix(:,1) = backMatrix(:,1)/2;
             else
-                forwardMatrix = SineTransformForwardMatrix(n);
-                backMatrix = SineTransformBackMatrix(n);
+                interior = 1:(n-2);
+                forwardMatrix = (2/(n-1))*sin(pi*(interior.')*indices/(n-1));
+                backMatrix = sin(pi*(indices.')*interior/(n-1));
             end
         end
 
@@ -225,7 +230,7 @@ classdef TestRealToRealTransform < matlab.unittest.TestCase
         end
 
         function path = repositoryRoot()
-            path = fileparts(fileparts(fileparts(TestRealToRealTransform.fftwDirectory)));
+            path = TestRealToRealTransform.fftwDirectory;
         end
     end
 end

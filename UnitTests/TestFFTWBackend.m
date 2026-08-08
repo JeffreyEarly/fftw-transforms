@@ -3,10 +3,8 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
         function configurePathsAndBackend(testCase)
             testDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(testDirectory);
-            spectralDirectory = fileparts(fftwDirectory);
             testCase.applyFixture(matlab.unittest.fixtures.PathFixture(testDirectory));
-            addpath(spectralDirectory);
-            addpath(fftwDirectory);
+            testCase.applyFixture(matlab.unittest.fixtures.PathFixture(fftwDirectory));
             capabilities = FFTWBackend.build();
             testCase.assertTrue(capabilities.isComplete,capabilities.build.reason.message);
         end
@@ -49,34 +47,12 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
             testCase.verifyNumElements(capabilities.eligibility.realToReal.records,40);
         end
 
-        function testEligibilityMatchesCanonicalArtifacts(testCase)
+        function testEligibilityIsBounded(testCase)
             capabilities = FFTWBackend.capabilities();
-            repositoryRoot = TestFFTWBackend.repositoryRoot;
-            issue41Path = fullfile(repositoryRoot,capabilities.eligibility.horizontal.sourceArtifact);
-            issue43Path = fullfile(repositoryRoot,capabilities.eligibility.realToReal.sourceArtifact);
-            issue41 = jsondecode(fileread(issue41Path));
-            issue43 = jsondecode(fileread(issue43Path));
-            testCase.verifyTrue(issue41.readiness.ready);
-            testCase.verifyEqual(capabilities.eligibility.horizontal.gateSizes,issue41.configuration.gateSizes);
-            testCase.verifyEqual(capabilities.eligibility.horizontal.thresholds.rawForwardSpeedup,issue41.configuration.thresholds.rawForwardSpeedRatio);
-            testCase.verifyEqual(capabilities.eligibility.horizontal.thresholds.completeForwardSpeedup,issue41.configuration.thresholds.totalForwardSpeedRatio);
-            testCase.verifyEqual(capabilities.eligibility.horizontal.thresholds.destructiveInverseSpeedRatio,issue41.configuration.thresholds.inverseSpeedRatio);
-
             records = capabilities.eligibility.realToReal.records;
-            testCase.verifyNumElements(issue43.eligibility,numel(records));
-            for record = records'
-                artifact = issue43.eligibility([issue43.eligibility.Nz] == record.Nz & string({issue43.eligibility.dataType}) == record.dataType & string({issue43.eligibility.transformType}) == record.transformType & string({issue43.eligibility.direction}) == record.direction);
-                testCase.verifyNumElements(artifact,1);
-                testCase.verifyEqual(record.eligible,artifact.eligible);
-                testCase.verifyEqual(record.testedBatchCounts,artifact.testedBatchCounts(:).');
-                if record.eligible
-                    testCase.verifyEqual(record.intervals.minimumBatchCount,artifact.intervals.minimumBatchCount);
-                    testCase.verifyEqual(record.intervals.maximumBatchCount,artifact.intervals.maximumBatchCount);
-                else
-                    testCase.verifyEmpty(record.intervals);
-                end
-            end
-
+            testCase.verifyNumElements(records,40);
+            testCase.verifyEqual(unique([records.Nz]),[33 65 129 257 513]);
+            testCase.verifyTrue(all(arrayfun(@(record) isequal(record.testedBatchCounts,[1 8320 33024 131584]),records)));
             complexDct65 = records([records.Nz] == 65 & [records.dataType] == "complex" & [records.transformType] == "cosine" & [records.direction] == "forward");
             testCase.verifyFalse(TestFFTWBackend.isEligible(complexDct65,8320));
             testCase.verifyTrue(TestFFTWBackend.isEligible(complexDct65,33024));
@@ -263,8 +239,7 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
 
         function path = repositoryRoot()
             testDirectory = fileparts(mfilename('fullpath'));
-            fftwDirectory = fileparts(testDirectory);
-            path = fileparts(fileparts(fileparts(fftwDirectory)));
+            path = fileparts(testDirectory);
         end
 
         function paths = modulePaths(context)

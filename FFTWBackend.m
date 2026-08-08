@@ -196,17 +196,22 @@ classdef FFTWBackend
             if FFTWBackend.canonicalPath(context.moduleDirectory) ~= FFTWBackend.canonicalPath(context.sourceDirectory)
                 previousPath = path;
                 pathCleanup = onCleanup(@() path(previousPath));
+                previousDirectory = pwd;
+                directoryCleanup = onCleanup(@() FFTWBackend.changeDirectoryWithoutWarnings(previousDirectory));
                 addpath(context.moduleDirectory,'-begin');
+                cd(context.moduleDirectory);
             end
             capabilities = FFTWBackend.emptyCapabilities(context);
 
             if context.release ~= context.provider.supportedReleases
                 capabilities.reason = FFTWBackend.reason("unsupported-release","platform","","",sprintf('MATLAB release %s is unsupported; this backend currently supports R2026a.',context.release));
+                capabilities = FFTWBackend.propagateUnavailableReason(capabilities,capabilities.reason);
                 capabilities.build.isPossible = false;
                 return
             end
             if context.architecture ~= context.provider.supportedArchitectures
                 capabilities.reason = FFTWBackend.reason("unsupported-architecture","platform","","",sprintf('Architecture %s is unsupported; this backend currently supports maca64.',context.architecture));
+                capabilities = FFTWBackend.propagateUnavailableReason(capabilities,capabilities.reason);
                 capabilities.build.isPossible = false;
                 return
             end
@@ -225,6 +230,7 @@ classdef FFTWBackend
             capabilities.library.exists = libraryExists;
             if ~libraryExists
                 capabilities.reason = FFTWBackend.reason("bundled-library-missing","library","","",sprintf('The active MATLAB FFTW library was not found at %s.',expectedLibrary));
+                capabilities = FFTWBackend.propagateUnavailableReason(capabilities,capabilities.reason);
                 capabilities.build.isPossible = false;
                 return
             end
@@ -548,6 +554,15 @@ classdef FFTWBackend
             feature.reason = FFTWBackend.emptyReason;
         end
 
+        function capabilities = propagateUnavailableReason(capabilities,reason)
+            capabilities.modules.r2c.reason = reason;
+            capabilities.modules.r2r.reason = reason;
+            capabilities.features.r2c.reason = reason;
+            capabilities.features.c2r.reason = reason;
+            capabilities.features.dct1.reason = reason;
+            capabilities.features.dst1.reason = reason;
+        end
+
         function eligibility = eligibility()
             eligibility.horizontal.schemaVersion = "issue41-v1";
             eligibility.horizontal.isReady = true;
@@ -559,7 +574,7 @@ classdef FFTWBackend
             eligibility.horizontal.thresholds = struct('rawForwardSpeedup',1.25,'completeForwardSpeedup',1.10,'destructiveInverseSpeedRatio',0.95,'maximumRelativeError',1e-12);
             eligibility.horizontal.sourceIssue = 41;
             eligibility.horizontal.sourceCommit = "a7aef07";
-            eligibility.horizontal.sourceArtifact = "Matlab/Spectral/FFTW/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json";
+            eligibility.horizontal.sourceArtifact = "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json";
 
             eligibility.realToReal.schemaVersion = "issue43-v1";
             eligibility.realToReal.policy = "exact Nz and inclusive bounded batch intervals only; no extrapolation";
@@ -569,7 +584,7 @@ classdef FFTWBackend
             eligibility.realToReal.maximumRelativeError = 1e-12;
             eligibility.realToReal.sourceIssue = 43;
             eligibility.realToReal.sourceCommit = "18a37ce";
-            eligibility.realToReal.sourceArtifact = "Matlab/Spectral/FFTW/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json";
+            eligibility.realToReal.sourceArtifact = "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json";
             eligibility.realToReal.records = FFTWBackend.realToRealEligibilityRecords;
         end
 
@@ -662,6 +677,14 @@ classdef FFTWBackend
             catch
                 path = string(path);
             end
+        end
+
+        function changeDirectoryWithoutWarnings(directory)
+            warningState = warning;
+            warningCleanup = onCleanup(@() warning(warningState));
+            warning('off','all');
+            cd(directory);
+            clear warningCleanup
         end
 
         function reason = exceptionReason(exception,stage)

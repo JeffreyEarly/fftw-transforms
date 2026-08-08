@@ -259,7 +259,7 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
         end
 
         function path = repositoryRoot()
-            path = fileparts(fileparts(fileparts(TestRealToComplexTransform.fftwDirectory)));
+            path = TestRealToComplexTransform.fftwDirectory;
         end
     end
 end

@@ -10,10 +10,11 @@ classdef RealToRealTransform < handle
     % transform real and imaginary components as FFTW batches without
     % constructing separate MATLAB arrays.
     %
-    % Example:
-    %   transform = RealToRealTransform([65 128],dims=1,transform="cosine",dataType="complex");
-    %   coefficients = transform.transformForward(values);
-    %   roundTrip = transform.transformBack(coefficients);
+    % ```matlab
+    % transform = RealToRealTransform([65 128],dims=1,transform="cosine",dataType="complex");
+    % coefficients = transform.transformForward(values);
+    % roundTrip = transform.transformBack(coefficients);
+    % ```
     %
     % - Topic: Create a transform
     % - Topic: Inspect transform properties

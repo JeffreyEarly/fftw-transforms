@@ -10,7 +10,7 @@ classdef TestFFTWR2RBenchmark < matlab.unittest.TestCase
             cd(repositoryRoot);
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
-            addpath(fullfile(repositoryRoot,'Matlab','Spectral'));
+            addpath(repositoryRoot);
             addpath(fftwDirectory);
             if exist('fftw_r2r','file') ~= 3
                 RealToRealTransform.makeMexFiles;
@@ -73,7 +73,7 @@ classdef TestFFTWR2RBenchmark < matlab.unittest.TestCase
             cd(repositoryRoot);
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
-            addpath(fullfile(repositoryRoot,'Matlab','Spectral'));
+            addpath(repositoryRoot);
             addpath(fftwDirectory);
             previousPlanner = string(fftw('planner'));
             previousWisdom = fftw('dwisdom');
@@ -102,7 +102,7 @@ classdef TestFFTWR2RBenchmark < matlab.unittest.TestCase
         function [fftwDirectory,repositoryRoot] = repositoryPaths()
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
-            repositoryRoot = fileparts(fileparts(fileparts(fftwDirectory)));
+            repositoryRoot = fileparts(fileparts(fftwDirectory));
         end
 
         function wisdom = canonicalWisdom(wisdom)

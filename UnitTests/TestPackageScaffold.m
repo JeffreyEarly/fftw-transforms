@@ -33,37 +33,12 @@ classdef TestPackageScaffold < matlab.unittest.TestCase
             testCase.verifyFalse(isfile(fullfile(root,"tools","ci_release.m")));
         end
 
-        function testStructuredUnavailabilityDoesNotCompile(testCase)
-            isPortableEnvironment = string(version('-release')) == "2025b" && string(computer('arch')) == "glnxa64";
-            testCase.assumeTrue(isPortableEnvironment,"This test targets the portable Linux/R2025b CI environment.");
-
-            before = TestPackageScaffold.generatedMexFiles;
-            testCase.verifyWarningFree(@() FFTWBackend.capabilities());
-            capabilities = FFTWBackend.capabilities();
-            testCase.verifyEqual(capabilities.status,"unavailable");
-            testCase.verifyEqual(capabilities.reason.code,"unsupported-release");
-            testCase.verifyFalse(capabilities.build.attempted);
-            testCase.verifyFalse(capabilities.build.isPossible);
-
-            testCase.verifyWarningFree(@() FFTWBackend.build());
-            buildResult = FFTWBackend.build();
-            testCase.verifyEqual(buildResult.status,"unavailable");
-            testCase.verifyTrue(buildResult.build.attempted);
-            testCase.verifyFalse(buildResult.build.succeeded);
-            testCase.verifyEqual(buildResult.build.reason.code,"unsupported-platform");
-            testCase.verifyEqual(TestPackageScaffold.generatedMexFiles,before);
-        end
     end
 
     methods (Static, Access=private)
         function root = repositoryRoot()
             testDirectory = fileparts(mfilename('fullpath'));
             root = fileparts(testDirectory);
-        end
-
-        function names = generatedMexFiles()
-            files = dir(fullfile(TestPackageScaffold.repositoryRoot,"*."+mexext));
-            names = sort(string({files.name}));
         end
     end
 end

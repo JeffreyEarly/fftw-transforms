@@ -390,7 +390,8 @@ end
 end
 
 function sources = collectSourceProvenance(sourceDirectory)
-sourcePaths = [fullfile(sourceDirectory,"runFFTWFeasibilityBaseline.m"), fullfile(sourceDirectory,"RealToComplexTransform.m"), fullfile(sourceDirectory,"fftw_dft2.cpp")];
+paths = fftwBenchmarkPaths;
+sourcePaths = [fullfile(sourceDirectory,"runFFTWFeasibilityBaseline.m"), fullfile(paths.runtimeSourceDirectory,"RealToComplexTransform.m"), fullfile(sourceDirectory,"fftw_dft2.cpp")];
 sourceNames = ["runFFTWFeasibilityBaseline.m","RealToComplexTransform.m","fftw_dft2.cpp"];
 files = repmat(struct('path',"",'sha256',""),numel(sourcePaths),1);
 for iFile = 1:numel(sourcePaths)
@@ -399,7 +400,7 @@ for iFile = 1:numel(sourcePaths)
 end
 sources.files = files;
 
-repositoryRoot = fileparts(fileparts(fileparts(sourceDirectory)));
+repositoryRoot = paths.repositoryRoot;
 [commitStatus,commitText] = system(sprintf('git -C "%s" rev-parse HEAD',repositoryRoot));
 if commitStatus == 0
     sources.repositoryCommit = string(strtrim(commitText));

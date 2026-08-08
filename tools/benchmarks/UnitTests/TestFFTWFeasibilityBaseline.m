@@ -11,6 +11,7 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
             addpath(fftwDirectory);
+            addpath(repositoryRoot);
 
             previousPlanner = string(fftw('planner'));
             previousWisdom = fftw('dwisdom');
@@ -74,6 +75,7 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
             previousPath = path;
             pathCleanup = onCleanup(@() path(previousPath));
             addpath(fftwDirectory);
+            addpath(repositoryRoot);
 
             previousPlanner = string(fftw('planner'));
             previousWisdom = fftw('dwisdom');
@@ -105,7 +107,7 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
         function [fftwDirectory,repositoryRoot] = repositoryPaths()
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
-            repositoryRoot = fileparts(fileparts(fileparts(fftwDirectory)));
+            repositoryRoot = fileparts(fileparts(fftwDirectory));
         end
     end
 end

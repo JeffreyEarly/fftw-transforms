@@ -712,13 +712,14 @@ if isfield(inputStruct,fieldName), value = string(inputStruct.(fieldName)); else
 end
 
 function sources = collectSourceProvenance(sourceDirectory)
+paths = fftwBenchmarkPaths;
 names = ["runFFTWBundledNativeComparison.m","buildFFTWBundledNativeComparisonMex.m","buildFFTWMexOwnershipBenchmark.m","fftw_ownership_benchmark.cpp","runFFTWEngineLayoutBenchmark.m","fftw_engine_benchmark.cpp"];
 sources.files = repmat(struct('path',"",'sha256',""),numel(names),1);
 for iFile = 1:numel(names)
     sources.files(iFile).path = names(iFile);
     sources.files(iFile).sha256 = fileSHA256(fullfile(sourceDirectory,names(iFile)));
 end
-repositoryRoot = fileparts(fileparts(fileparts(sourceDirectory)));
+repositoryRoot = paths.repositoryRoot;
 [status,commit] = system(sprintf('git -C "%s" rev-parse HEAD',repositoryRoot));
 if status == 0, sources.repositoryCommit = string(strtrim(commit)); else, sources.repositoryCommit = "unknown"; end
 [status,dirty] = system(sprintf('git -C "%s" status --porcelain --untracked-files=all',repositoryRoot));

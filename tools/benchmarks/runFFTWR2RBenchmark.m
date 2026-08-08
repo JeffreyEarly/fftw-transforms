@@ -464,12 +464,14 @@ end
 
 function sources = collectSourceProvenance(sourceDirectory)
 names = ["runFFTWR2RBenchmark.m","RealToRealTransform.m","fftw_r2r.cpp","fftw_backend_support.hpp"];
+paths = fftwBenchmarkPaths;
+sourcePaths = [fullfile(sourceDirectory,names(1)) fullfile(paths.runtimeSourceDirectory,names(2:end))];
 sources.files = repmat(struct('path',"",'sha256',""),numel(names),1);
 for iFile = 1:numel(names)
     sources.files(iFile).path = names(iFile);
-    sources.files(iFile).sha256 = fileSHA256(fullfile(sourceDirectory,names(iFile)));
+    sources.files(iFile).sha256 = fileSHA256(sourcePaths(iFile));
 end
-repositoryRoot = fileparts(fileparts(fileparts(sourceDirectory)));
+repositoryRoot = paths.repositoryRoot;
 [status,commit] = system(sprintf('git -C "%s" rev-parse HEAD',repositoryRoot));
 if status == 0, sources.repositoryCommit = string(strtrim(commit)); else, sources.repositoryCommit = "unknown"; end
 [status,dirty] = system(sprintf('git -C "%s" status --porcelain --untracked-files=all',repositoryRoot));

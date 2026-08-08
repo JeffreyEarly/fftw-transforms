@@ -36,6 +36,12 @@ jobs:
             exit 1
           fi
           test ! -e tools/ci_release.m
+          root_matlab="$(find . -maxdepth 1 -type f -name '*.m' -exec basename {} \; | sort)"
+          expected_matlab="$(printf '%s\n' FFTWBackend.m RealToComplexTransform.m RealToRealTransform.m RealToRealTransformMexFFTW.m | sort)"
+          test "$root_matlab" = "$expected_matlab"
+          root_native="$(find . -maxdepth 1 -type f \( -name '*.cpp' -o -name '*.hpp' -o -name 'fftw3.h' \) -exec basename {} \; | sort)"
+          expected_native="$(printf '%s\n' fftw3.h fftw_backend_support.hpp fftw_r2c.cpp fftw_r2r.cpp | sort)"
+          test "$root_native" = "$expected_native"
 
       - name: Set up MATLAB
         uses: matlab-actions/setup-matlab@v2
@@ -46,7 +52,7 @@ jobs:
       - name: Run portable package tests and rebuild documentation
         uses: matlab-actions/run-command@v2
         with:
-          command: addpath("tools"); build_website_documentation(rootDir=pwd); results = runtests(fullfile("UnitTests","TestPackageScaffold.m")); assertSuccess(results)
+          command: addpath("tools"); build_website_documentation(rootDir=pwd); results = runtests({fullfile("UnitTests","TestPackageScaffold.m"),fullfile("UnitTests","TestFFTWBackendPortable.m")}); assertSuccess(results)
 
       - name: Verify generated documentation is current
         run: git diff --exit-code -- docs
