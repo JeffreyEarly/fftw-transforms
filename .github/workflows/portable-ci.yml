@@ -1,0 +1,52 @@
+name: Portable MATLAB CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  linux-r2025b:
+    name: Linux / MATLAB R2025b Update 2
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify imported history and source-only policy
+        shell: bash
+        run: |
+          test "$(git rev-list --count 0281a11f0b6ba32d782bb5887460e1661b6a8bcf)" -eq 35
+          test "$(git rev-parse 0281a11f0b6ba32d782bb5887460e1661b6a8bcf^{tree})" = "d8f8e58de659f8c0af8400c003ca98ab9529e1d5"
+          test "$(tail -n +2 tools/history/gl-fftw-commit-map.tsv | wc -l | tr -d ' ')" -eq 35
+          while IFS=$'\t' read -r old_commit new_commit; do
+            test "$old_commit" = "old_commit" && continue
+            git cat-file -e "$new_commit^{commit}"
+          done < tools/history/gl-fftw-commit-map.tsv
+          forbidden="$(git ls-files | grep -E '(^|/)(build|dist|\.fftw-cache|native-fftw-cache)/|\.(mexa64|mexmaci64|mexmaca64|mexw64|o|obj|a|dylib|so|dll)$|(^|/)fftw-.*\.(tar|tar\.gz|tar\.bz2|tar\.xz|zip)$' || true)"
+          if [ -n "$forbidden" ]; then
+            printf 'Tracked generated or third-party artifacts:\n%s\n' "$forbidden"
+            exit 1
+          fi
+          test ! -e tools/ci_release.m
+
+      - name: Set up MATLAB
+        uses: matlab-actions/setup-matlab@v2
+        with:
+          release: R2025bU2
+          cache: true
+
+      - name: Run portable package tests and rebuild documentation
+        uses: matlab-actions/run-command@v2
+        with:
+          command: addpath("tools"); build_website_documentation(rootDir=pwd); results = runtests(fullfile("UnitTests","TestPackageScaffold.m")); assertSuccess(results)
+
+      - name: Verify generated documentation is current
+        run: git diff --exit-code -- docs
