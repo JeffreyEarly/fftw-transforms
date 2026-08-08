@@ -52,7 +52,7 @@ jobs:
       - name: Run portable package tests and rebuild documentation
         uses: matlab-actions/run-command@v2
         with:
-          command: addpath("tools"); build_website_documentation(rootDir=pwd); results = runtests({fullfile("UnitTests","TestPackageScaffold.m"),fullfile("UnitTests","TestFFTWBackendPortable.m")}); assertSuccess(results)
+          command: addpath("tools"); build_website_documentation(rootDir=pwd); results = runtests({'UnitTests/TestPackageScaffold.m','UnitTests/TestFFTWBackendPortable.m'}); assertSuccess(results)
 
       - name: Verify generated documentation is current
         run: git diff --exit-code -- docs
