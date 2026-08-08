@@ -1,0 +1,1703 @@
+{
+  "schemaVersion": "1.0.0",
+  "status": "passed",
+  "runId": "20260808T213648455Z-maca64-r2026a",
+  "generatedAtUTC": "2026-08-08T21:36:48.547Z",
+  "completedAtUTC": "2026-08-08T21:38:08.858Z",
+  "candidateVersion": "1.0.0",
+  "candidateSourceCommit": "3b50801d669fab19ec621f15f039d8f33ec40388",
+  "environment": {
+    "matlabVersion": "26.1.0.3312084 (R2026a) Update 4",
+    "matlabRelease": "2026a",
+    "architecture": "maca64",
+    "operatingSystem": "Darwin 25.5.0 Darwin Kernel Version 25.5.0: Tue Jun  9 22:28:34 PDT 2026; root:xnu-12377.121.10~1/RELEASE_ARM64_T6050 arm64",
+    "processor": "Apple M5 Max",
+    "machineModel": "Mac17,6",
+    "physicalMemoryBytes": 5.1539607552E+10,
+    "mexCompiler": "Xcode Clang++",
+    "mexCompilerVersion": "21.0.0",
+    "canonicalPlatformRequired": true,
+    "canonicalPlatform": true
+  },
+  "source": {
+    "commit": "3b50801d669fab19ec621f15f039d8f33ec40388",
+    "tree": "4d4e7705dd3efabe9fbb2130640b13a532f97499"
+  },
+  "package": {
+    "authoring": {
+      "name": "FFTWTransforms",
+      "displayName": "FFTWTransforms",
+      "version": "0.1.0",
+      "id": "c9f6616c-d26a-4fdc-8426-91ca8ffd751b",
+      "releaseCompatibility": ">=R2024b",
+      "dependencies": [],
+      "folders": []
+    },
+    "exported": {
+      "name": "FFTWTransforms",
+      "displayName": "FFTWTransforms",
+      "version": "1.0.0",
+      "id": "c9f6616c-d26a-4fdc-8426-91ca8ffd751b",
+      "releaseCompatibility": ">=R2024b",
+      "dependencies": [],
+      "folders": []
+    }
+  },
+  "exporter": {
+    "repository": "JeffreyEarly/OceanKit",
+    "commit": "92e618cbc4e47752352643664b4f5f192d663587",
+    "tree": "adc4b5bd5f7b5874757a326a92051fc63d8c5646",
+    "path": "tools/ci_release.m",
+    "sha256": "8bfe74a13661156abc90bdf0e7fd623bf115b2bc60851d8450a24f445be8f57b"
+  },
+  "export": {
+    "prebuildFiles": [
+      {
+        "path": ".gitignore",
+        "bytes": 287,
+        "sha256": "867b73c02495d7ac45d8894dc1768d188f73f8a790ea07df9e3f375b6425280e"
+      },
+      {
+        "path": "CHANGELOG.md",
+        "bytes": 831,
+        "sha256": "f67ba88e8472c7b5d20763b771f0469375dc16ef6c67035d82b8ddfa46b362dc"
+      },
+      {
+        "path": "FFTWBackend.m",
+        "bytes": 41424,
+        "sha256": "76fc69d1e1149172317f8c8b783a246b0c3db0e4a57ed08f00993671726f024f"
+      },
+      {
+        "path": "LICENSE",
+        "bytes": 1073,
+        "sha256": "13a420216c791ae727599b3e49e6ac1db8f971b4d39e83ed1b0237089e4442ac"
+      },
+      {
+        "path": "README.md",
+        "bytes": 3566,
+        "sha256": "bf450f04c230d20db283ad1e40e8c4a8950858cbd75899d9958787f188bd72df"
+      },
+      {
+        "path": "RealToComplexTransform.m",
+        "bytes": 9925,
+        "sha256": "deca5458649f4d0600eb85ab02f12ad8193291426ef8fec2d9c497cc8bcd5d0a"
+      },
+      {
+        "path": "RealToRealTransform.m",
+        "bytes": 10138,
+        "sha256": "934e679f01d5fc43034427b7425edefd63f2834e005f76ffd71f97d26455ab38"
+      },
+      {
+        "path": "RealToRealTransformMexFFTW.m",
+        "bytes": 2426,
+        "sha256": "79b4f9b4c9ebd44742fd0fec3d7acfe02c5b3bdf614800ff8784ba149514207e"
+      },
+      {
+        "path": "THIRD_PARTY_NOTICES.md",
+        "bytes": 2090,
+        "sha256": "f2612fc03b2311724c25e818463b8098da7021feb6ac99306ecd32d310c3d49a"
+      },
+      {
+        "path": "UnitTests/TestFFTWBackend.m",
+        "bytes": 14866,
+        "sha256": "9f1632fc0b7e913b770568beb5c1f8be6b34e5cd3babe934599060ef4d868bde"
+      },
+      {
+        "path": "UnitTests/TestFFTWBackendPortable.m",
+        "bytes": 3386,
+        "sha256": "d8bf3703abcf66b261d4aec0e1b82999905056e81ae9f9efa96f67362fae04fa"
+      },
+      {
+        "path": "UnitTests/TestPackageScaffold.m",
+        "bytes": 2526,
+        "sha256": "62f90ddebea97853f1ccfcbc7b11441f173f672e25c19162892029406be134a9"
+      },
+      {
+        "path": "UnitTests/TestRealToComplexTransform.m",
+        "bytes": 14522,
+        "sha256": "3f396a05820bc46bf23223ebc68dfd7f918f04ff8948c71e2efe0620c2222f8d"
+      },
+      {
+        "path": "UnitTests/TestRealToRealTransform.m",
+        "bytes": 11955,
+        "sha256": "3cb5c6624cc93aac1f3ff5e62ca7819d3f45abe858d51c63dcfae50481ac4991"
+      },
+      {
+        "path": "UnitTests/TestableFFTWBackend.m",
+        "bytes": 441,
+        "sha256": "a066f48c35a0408dcf676e4a8bc336e84d27cb083da169ac62a218669f8fff88"
+      },
+      {
+        "path": "fftw3.h",
+        "bytes": 17900,
+        "sha256": "8065447638c2cc8451c415248a89c74de4c5f2d1abbac9966454d7aef1b6839d"
+      },
+      {
+        "path": "fftw_backend_support.hpp",
+        "bytes": 6043,
+        "sha256": "96d8553a5701cf6fe819648aba4da67f11095244fbc698156a05032de056d939"
+      },
+      {
+        "path": "fftw_r2c.cpp",
+        "bytes": 29916,
+        "sha256": "c5bbaead7a9d83d7da6e0369d0d0ef3a036f1833bfa009874f7ab45ddffeaff1"
+      },
+      {
+        "path": "fftw_r2r.cpp",
+        "bytes": 28826,
+        "sha256": "95532e0bf987d827d689a4b2d06c896d2103655a59aea8738bfcdb6dbcc67348"
+      },
+      {
+        "path": "resources/mpackage.json",
+        "bytes": 676,
+        "sha256": "185dd41e4d7300d412c7d7cf23a5138cf745bcfb287e62d4a5d6c8307b870f9c"
+      }
+    ],
+    "prebuildDigest": "7b5554243a3df81346e073a0d66577275cb68ccd0315e0d92456e010d3e136cb",
+    "hygiene": {
+      "forbiddenFiles": [],
+      "passed": true
+    },
+    "postbuildMexFiles": [
+      "fftw_r2c.mexmaca64",
+      "fftw_r2r.mexmaca64"
+    ]
+  },
+  "tests": {
+    "authoring": {
+      "count": 32,
+      "passed": 32,
+      "failed": 0,
+      "incomplete": 0,
+      "durationSeconds": 42.135384666666667,
+      "details": [
+        {
+          "name": "TestPackageScaffold/testPackageManifest",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.110483125
+        },
+        {
+          "name": "TestPackageScaffold/testLicensingAndAuthoringFiles",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.019689375000000002
+        },
+        {
+          "name": "TestRealToComplexTransform/testOrderedDimensionsLayoutsAndNormalization",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.7704294583333333
+        },
+        {
+          "name": "TestRealToComplexTransform/testOwnershipCopyAndLifetimeContracts",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.069245625
+        },
+        {
+          "name": "TestRealToComplexTransform/testAlignmentModes",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.023043458333333332
+        },
+        {
+          "name": "TestRealToComplexTransform/testClassDestructiveReassignmentAndAliases",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.028081375
+        },
+        {
+          "name": "TestRealToComplexTransform/testErrorsAndCleanup",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.14344725
+        },
+        {
+          "name": "TestRealToComplexTransform/testBuildIsIndependentOfCurrentDirectory",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 2.9380419166666671
+        },
+        {
+          "name": "TestRealToRealTransform/testMatrixAgreementAndRoundTrips",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.7946367916666666
+        },
+        {
+          "name": "TestRealToRealTransform/testOwnershipInstrumentationAndLifetime",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.012673458333333333
+        },
+        {
+          "name": "TestRealToRealTransform/testCompatibilityAndAlignment",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.03700875
+        },
+        {
+          "name": "TestRealToRealTransform/testErrorsCleanupAndBuildPaths",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 2.8665268333333334
+        },
+        {
+          "name": "TestFFTWBackend/testCapabilitySchemaAndSelfTests",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 4.2412760833333332
+        },
+        {
+          "name": "TestFFTWBackend/testEligibilityIsBounded",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.10759783333333334
+        },
+        {
+          "name": "TestFFTWBackend/testStructuredUnavailableAndPartialResults",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.9877655
+        },
+        {
+          "name": "TestFFTWBackend/testProviderNeutralOrchestrationAndStateRestoration",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.22087975
+        },
+        {
+          "name": "TestFFTWBackend/testCapabilityQueryPreservesLiveTransform",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.2007195
+        },
+        {
+          "name": "TestFFTWBackend/testBuildFromAnyWorkingDirectory",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 7.078012208333333
+        },
+        {
+          "name": "TestFFTWBackend/testLockedModuleAndTransactionalRollback",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 7.7979525
+        },
+        {
+          "name": "TestFFTWBackend/testBuildFailureIsReturnedWithoutWarning",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.384860375
+        },
+        {
+          "name": "TestFFTWBenchmarkHistory/testStaticEligibilityMatchesCanonicalArtifacts",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.24265775
+        },
+        {
+          "name": "TestFFTWBenchmarkHistory/testCanonicalArtifactHashesAreFixed",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.046569916666666669
+        },
+        {
+          "name": "TestFFTWBenchmarkHistory/testCommitMappingsAndNonbenchmarkEntries",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.011459541666666666
+        },
+        {
+          "name": "TestFFTWBenchmarkHistory/testRuntimeHistoryMatchesCanonicalRecord",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.12630233333333335
+        },
+        {
+          "name": "TestFFTWFeasibilityBaseline/testCompleteSmokeRun",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.994969125
+        },
+        {
+          "name": "TestFFTWFeasibilityBaseline/testFailureWritesArtifactAndRestoresState",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.9469610833333333
+        },
+        {
+          "name": "TestFFTWEngineLayoutBenchmark/testCompleteSmokeRun",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 3.5808309166666668
+        },
+        {
+          "name": "TestFFTWEngineLayoutBenchmark/testFailureWritesPartialArtifactAndRestoresState",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.34541633333333333
+        },
+        {
+          "name": "TestFFTWMexOwnershipBenchmark/testSmokeBenchmarkAndArtifacts",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.8876373750000002
+        },
+        {
+          "name": "TestFFTWMexOwnershipBenchmark/testFailureArtifactAndStateRestoration",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.27894829166666668
+        },
+        {
+          "name": "TestFFTWR2RBenchmark/testSmokeArtifactsAndEligibility",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.43287845833333333
+        },
+        {
+          "name": "TestFFTWR2RBenchmark/testFailureArtifactAndStateRestoration",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.40838237499999996
+        }
+      ]
+    },
+    "unrelatedDirectory": {
+      "count": 2,
+      "passed": 2,
+      "failed": 0,
+      "incomplete": 0,
+      "durationSeconds": 0.062261583333333329,
+      "details": [
+        {
+          "name": "TestPackageScaffold/testPackageManifest",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.049562583333333333
+        },
+        {
+          "name": "TestPackageScaffold/testLicensingAndAuthoringFiles",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.012698999999999998
+        }
+      ]
+    },
+    "exported": {
+      "count": 20,
+      "passed": 20,
+      "failed": 0,
+      "incomplete": 0,
+      "durationSeconds": 30.34625883333333,
+      "details": [
+        {
+          "name": "TestPackageScaffold/testPackageManifest",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.046517291666666669
+        },
+        {
+          "name": "TestPackageScaffold/testLicensingAndAuthoringFiles",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.013876875
+        },
+        {
+          "name": "TestRealToComplexTransform/testOrderedDimensionsLayoutsAndNormalization",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.7245552916666669
+        },
+        {
+          "name": "TestRealToComplexTransform/testOwnershipCopyAndLifetimeContracts",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.01604425
+        },
+        {
+          "name": "TestRealToComplexTransform/testAlignmentModes",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.019674333333333332
+        },
+        {
+          "name": "TestRealToComplexTransform/testClassDestructiveReassignmentAndAliases",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.014110708333333333
+        },
+        {
+          "name": "TestRealToComplexTransform/testErrorsAndCleanup",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.10479175
+        },
+        {
+          "name": "TestRealToComplexTransform/testBuildIsIndependentOfCurrentDirectory",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 2.7999952083333337
+        },
+        {
+          "name": "TestRealToRealTransform/testMatrixAgreementAndRoundTrips",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 1.7669075416666669
+        },
+        {
+          "name": "TestRealToRealTransform/testOwnershipInstrumentationAndLifetime",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.010445958333333333
+        },
+        {
+          "name": "TestRealToRealTransform/testCompatibilityAndAlignment",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.0333225
+        },
+        {
+          "name": "TestRealToRealTransform/testErrorsCleanupAndBuildPaths",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 2.8824991666666668
+        },
+        {
+          "name": "TestFFTWBackend/testCapabilitySchemaAndSelfTests",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 4.2262514583333335
+        },
+        {
+          "name": "TestFFTWBackend/testEligibilityIsBounded",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.10052391666666667
+        },
+        {
+          "name": "TestFFTWBackend/testStructuredUnavailableAndPartialResults",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.93171845833333333
+        },
+        {
+          "name": "TestFFTWBackend/testProviderNeutralOrchestrationAndStateRestoration",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.21013191666666667
+        },
+        {
+          "name": "TestFFTWBackend/testCapabilityQueryPreservesLiveTransform",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.195905125
+        },
+        {
+          "name": "TestFFTWBackend/testBuildFromAnyWorkingDirectory",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 7.1743228333333331
+        },
+        {
+          "name": "TestFFTWBackend/testLockedModuleAndTransactionalRollback",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 7.72058275
+        },
+        {
+          "name": "TestFFTWBackend/testBuildFailureIsReturnedWithoutWarning",
+          "passed": true,
+          "failed": false,
+          "incomplete": false,
+          "durationSeconds": 0.3540815
+        }
+      ]
+    }
+  },
+  "capabilities": {
+    "schemaVersion": "1.0.0",
+    "status": "available",
+    "isAvailable": true,
+    "isComplete": true,
+    "platform": {
+      "matlabVersion": "26.1.0.3312084 (R2026a) Update 4",
+      "matlabRelease": "2026a",
+      "architecture": "maca64",
+      "mexExtension": "mexmaca64",
+      "isSupported": true
+    },
+    "provider": {
+      "id": "matlab-bundled",
+      "type": "bundled",
+      "origin": "active MATLAB installation",
+      "isDefault": true,
+      "distributionPolicy": "build locally; distribute no MEX or FFTW binary",
+      "identityValidated": true
+    },
+    "compiler": {
+      "name": "Xcode Clang++",
+      "version": "21.0.0",
+      "isAvailable": true
+    },
+    "library": {
+      "expectedPath": "/Applications/MATLAB_R2026a.app/bin/maca64/libmwfftw3.3.dylib",
+      "exists": true,
+      "resolvedPath": "/Applications/MATLAB_R2026a.app/bin/maca64/libmwfftw3.3.dylib",
+      "version": "fftw-3.3.8",
+      "identityValidated": true
+    },
+    "modules": {
+      "r2c": {
+        "name": "fftw_r2c",
+        "expectedPath": "/private/var/folders/cj/111cr_h11xz0b9rshvpdh_th0000gn/T/tpb1b1d858_a5c1_489b_a559_94bbdeafdd45/source/dist/FFTWTransforms-1.0.0/fftw_r2c.mexmaca64",
+        "path": "/private/var/folders/cj/111cr_h11xz0b9rshvpdh_th0000gn/T/tpb1b1d858_a5c1_489b_a559_94bbdeafdd45/source/dist/FFTWTransforms-1.0.0/fftw_r2c.mexmaca64",
+        "exists": true,
+        "loaded": true,
+        "libraryPath": "/Applications/MATLAB_R2026a.app/bin/maca64/libmwfftw3.3.dylib",
+        "libraryVersion": "fftw-3.3.8",
+        "identityValidated": true,
+        "isAvailable": true,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      },
+      "r2r": {
+        "name": "fftw_r2r",
+        "expectedPath": "/private/var/folders/cj/111cr_h11xz0b9rshvpdh_th0000gn/T/tpb1b1d858_a5c1_489b_a559_94bbdeafdd45/source/dist/FFTWTransforms-1.0.0/fftw_r2r.mexmaca64",
+        "path": "/private/var/folders/cj/111cr_h11xz0b9rshvpdh_th0000gn/T/tpb1b1d858_a5c1_489b_a559_94bbdeafdd45/source/dist/FFTWTransforms-1.0.0/fftw_r2r.mexmaca64",
+        "exists": true,
+        "loaded": true,
+        "libraryPath": "/Applications/MATLAB_R2026a.app/bin/maca64/libmwfftw3.3.dylib",
+        "libraryVersion": "fftw-3.3.8",
+        "identityValidated": true,
+        "isAvailable": true,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      }
+    },
+    "features": {
+      "r2c": {
+        "id": "r2c",
+        "module": "fftw_r2c",
+        "isAvailable": true,
+        "selfTestPassed": true,
+        "alignmentPassed": true,
+        "maximumRelativeError": 1.5064640188334297E-16,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      },
+      "c2r": {
+        "id": "c2r",
+        "module": "fftw_r2c",
+        "isAvailable": true,
+        "selfTestPassed": true,
+        "alignmentPassed": true,
+        "maximumRelativeError": 3.3306697395652123E-16,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      },
+      "dct1": {
+        "id": "dct1",
+        "module": "fftw_r2r",
+        "isAvailable": true,
+        "selfTestPassed": true,
+        "alignmentPassed": true,
+        "maximumRelativeError": 2.6184791366802615E-16,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      },
+      "dst1": {
+        "id": "dst1",
+        "module": "fftw_r2r",
+        "isAvailable": true,
+        "selfTestPassed": true,
+        "alignmentPassed": true,
+        "maximumRelativeError": 1.0562708921629483E-15,
+        "reason": {
+          "code": "",
+          "stage": "",
+          "module": "",
+          "identifier": "",
+          "message": ""
+        }
+      }
+    },
+    "eligibility": {
+      "horizontal": {
+        "schemaVersion": "issue41-v1",
+        "isReady": true,
+        "layout": "half-x",
+        "transformDimensions": [
+          2,
+          1
+        ],
+        "strategy": "guru-rank2",
+        "ownership": "MATLAB-managed zero-copy forward and uniquely owned destructive inverse",
+        "gateSizes": [
+          [
+            256,
+            256,
+            64
+          ],
+          [
+            1024,
+            1024,
+            30
+          ]
+        ],
+        "thresholds": {
+          "rawForwardSpeedup": 1.25,
+          "completeForwardSpeedup": 1.1,
+          "destructiveInverseSpeedRatio": 0.95,
+          "maximumRelativeError": 1E-12
+        },
+        "sourceIssue": 41,
+        "sourceCommit": "a7aef07",
+        "sourceArtifact": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json",
+        "history": {
+          "productionRepository": "JeffreyEarly/fftw-transforms",
+          "historicalRepository": "JeffreyEarly/GLNumericalModelingKit",
+          "historicalIssue": 41,
+          "originalCommit": "a7aef078e2811543e4ae4f365eb0106261c138c5",
+          "filteredCommit": "28e4b9abc4c8122f7d6b9f3c232fc85fb47a636c",
+          "canonicalArtifact": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json",
+          "artifactSHA256": "f00ec5519529e2025806cf09a082dfc1dda4d45afce304affc9e943aa2fe4def"
+        }
+      },
+      "realToReal": {
+        "schemaVersion": "issue43-v1",
+        "policy": "exact Nz and inclusive bounded batch intervals only; no extrapolation",
+        "testedNz": [
+          33,
+          65,
+          129,
+          257,
+          513
+        ],
+        "testedBatchCounts": [
+          1,
+          8320,
+          33024,
+          131584
+        ],
+        "speedThreshold": 1.1,
+        "maximumRelativeError": 1E-12,
+        "sourceIssue": 43,
+        "sourceCommit": "18a37ce",
+        "sourceArtifact": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json",
+        "history": {
+          "productionRepository": "JeffreyEarly/fftw-transforms",
+          "historicalRepository": "JeffreyEarly/GLNumericalModelingKit",
+          "historicalIssue": 43,
+          "originalCommit": "18a37ce7c1dbb17965e4614181eb2559e67dabb5",
+          "filteredCommit": "829209d6707abcdef87d28be5e970a37bc73498c",
+          "canonicalArtifact": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json",
+          "artifactSHA256": "85db2321a41b14eae867bbb57fcef25bbe931029b89b93a964ebe515f7d70a5d"
+        },
+        "records": [
+          {
+            "Nz": 33,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 131584,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 33,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 131584,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 65,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 33024,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 129,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": false,
+            "intervals": [],
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 257,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "real",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "real",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "complex",
+            "transformType": "cosine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "forward",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          },
+          {
+            "Nz": 513,
+            "dataType": "complex",
+            "transformType": "sine",
+            "direction": "inverse",
+            "eligible": true,
+            "intervals": {
+              "minimumBatchCount": 8320,
+              "maximumBatchCount": 131584
+            },
+            "testedBatchCounts": [
+              1,
+              8320,
+              33024,
+              131584
+            ]
+          }
+        ]
+      }
+    },
+    "build": {
+      "isRequired": false,
+      "isPossible": true,
+      "attempted": false,
+      "succeeded": false,
+      "installed": false,
+      "startedAtUTC": "",
+      "completedAtUTC": "",
+      "durationSeconds": null,
+      "reason": {
+        "code": "",
+        "stage": "",
+        "module": "",
+        "identifier": "",
+        "message": ""
+      }
+    },
+    "reason": {
+      "code": "",
+      "stage": "",
+      "module": "",
+      "identifier": "",
+      "message": ""
+    }
+  },
+  "numerics": {
+    "features": [
+      {
+        "id": "r2c",
+        "maximumRelativeError": 1.5064640188334297E-16,
+        "passed": true
+      },
+      {
+        "id": "c2r",
+        "maximumRelativeError": 3.3306697395652123E-16,
+        "passed": true
+      },
+      {
+        "id": "dct1",
+        "maximumRelativeError": 2.6184791366802615E-16,
+        "passed": true
+      },
+      {
+        "id": "dst1",
+        "maximumRelativeError": 1.0562708921629483E-15,
+        "passed": true
+      }
+    ],
+    "maximumRelativeError": 1.0562708921629483E-15
+  },
+  "validation": {
+    "providerIsBundled": true,
+    "libraryVersionPassed": true,
+    "libraryIdentityPassed": true,
+    "numericalPassed": true,
+    "ownershipAndPointerPassed": true,
+    "alignmentPassed": true,
+    "rollbackPassed": true,
+    "cleanupPassed": true,
+    "moduleLocksBalanced": true,
+    "modulesBesideExport": true,
+    "passed": true
+  },
+  "benchmarkHistory": {
+    "path": "tools/benchmarks/benchmark-history.json",
+    "sha256": "cae5c9a7338ad8694df64e9178f033f084331c22f584408b10a925679179ece8",
+    "record": {
+      "schemaVersion": "1.0.0",
+      "productionRepository": "JeffreyEarly/fftw-transforms",
+      "historicalRepository": "JeffreyEarly/GLNumericalModelingKit",
+      "historicalPath": "Matlab/Spectral/FFTW",
+      "extraction": {
+        "sourceCommit": "3c5fce2b2df9c892418676ef75ffbc5752216e55",
+        "sourceTree": "d8f8e58de659f8c0af8400c003ca98ab9529e1d5",
+        "filteredTip": "0281a11f0b6ba32d782bb5887460e1661b6a8bcf",
+        "commitMap": "tools/history/gl-fftw-commit-map.tsv"
+      },
+      "records": [
+        {
+          "issue": 37,
+          "kind": "benchmark",
+          "originalSourceCommit": "39d457504d8f340ea83166c07d25e25b7b470505",
+          "artifactCommit": "eaaaabe33936daee6bb291d902ffb63575a93e25",
+          "filteredArtifactCommit": "e52804847e6a7e993502c21d59240262240da26d",
+          "artifactDirectory": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a",
+          "json": {
+            "path": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a/benchmark.json",
+            "sha256": "7301050b1e0d9d2df9f8a91bde3be22abad856dafb1c43672d0b857a18fa71bf"
+          },
+          "markdown": {
+            "path": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a/summary.md",
+            "sha256": "84a8012da82d4d7d3994ce174667b1ebba77fcce4084ab872d5e07dfd193bd84"
+          },
+          "libraries": [
+            "MATLAB-bundled FFTW 3.3.8"
+          ],
+          "recordedWorkingTree": "dirty",
+          "note": ""
+        },
+        {
+          "issue": 38,
+          "kind": "benchmark",
+          "originalSourceCommit": "eaaaabe33936daee6bb291d902ffb63575a93e25",
+          "artifactCommit": "3e0901978c71d8da7d383784b4a016242af201b6",
+          "filteredArtifactCommit": "654c919db2a10152a0d2f23fffa3cfd231d9fd22",
+          "artifactDirectory": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a",
+          "json": {
+            "path": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a/engine-layout-benchmark.json",
+            "sha256": "1bbb30433322629859abda956b706417cb38e43bb93b16a210e2502a2785f1b8"
+          },
+          "markdown": {
+            "path": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a/summary.md",
+            "sha256": "e3c24709d2168b4225fbe5788d16bb2621acfc8ac48d430ca6d4cd0c94541f89"
+          },
+          "libraries": [
+            "MATLAB-bundled FFTW 3.3.8",
+            "native FFTW 3.3.11",
+            "Apple Accelerate/vDSP"
+          ],
+          "recordedWorkingTree": "dirty",
+          "note": ""
+        },
+        {
+          "issue": 39,
+          "kind": "benchmark",
+          "originalSourceCommit": "3e0901978c71d8da7d383784b4a016242af201b6",
+          "artifactCommit": "9179683a658d0fad0e7e9021abd5cee1369cb06f",
+          "filteredArtifactCommit": "b372fe2ccee1055e76a0e904758aba31a7f53dc1",
+          "artifactDirectory": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a",
+          "json": {
+            "path": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a/ownership-benchmark.json",
+            "sha256": "ef50fc2734a0d34fa0d0bf569f5bd347f3d6dd9dc0719353d9dc4c0c92ff2473"
+          },
+          "markdown": {
+            "path": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a/summary.md",
+            "sha256": "bbc9504d477adcf9c1f6ac9882fdce067eb21c935b544cafb32f4d2dc1264cc2"
+          },
+          "libraries": [
+            "MATLAB-bundled FFTW 3.3.8",
+            "native FFTW 3.3.11"
+          ],
+          "recordedWorkingTree": "not-recorded",
+          "note": ""
+        },
+        {
+          "issue": 40,
+          "kind": "decision",
+          "originalSourceCommit": "",
+          "artifactCommit": "",
+          "filteredArtifactCommit": "",
+          "artifactDirectory": "",
+          "json": {
+            "path": "",
+            "sha256": ""
+          },
+          "markdown": {
+            "path": "",
+            "sha256": ""
+          },
+          "libraries": [],
+          "recordedWorkingTree": "not-applicable",
+          "note": "Issue #40 owns the readiness decision and did not create a canonical benchmark artifact."
+        },
+        {
+          "issue": 41,
+          "kind": "benchmark",
+          "originalSourceCommit": "9179683a658d0fad0e7e9021abd5cee1369cb06f",
+          "artifactCommit": "a7aef078e2811543e4ae4f365eb0106261c138c5",
+          "filteredArtifactCommit": "28e4b9abc4c8122f7d6b9f3c232fc85fb47a636c",
+          "artifactDirectory": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a",
+          "json": {
+            "path": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json",
+            "sha256": "f00ec5519529e2025806cf09a082dfc1dda4d45afce304affc9e943aa2fe4def"
+          },
+          "markdown": {
+            "path": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/summary.md",
+            "sha256": "88fc4c02232c2db5e7f4bd04c5949c428e4deb4b7c99156f36166a4f0a28ca29"
+          },
+          "libraries": [
+            "MATLAB-bundled FFTW 3.3.8",
+            "native FFTW 3.3.11"
+          ],
+          "recordedWorkingTree": "dirty",
+          "note": ""
+        },
+        {
+          "issue": 42,
+          "kind": "production-code",
+          "originalSourceCommit": "",
+          "artifactCommit": "f8b41411f2d8a859d3a40e3566ec722b872772ca",
+          "filteredArtifactCommit": "ab229757c47c8f2e1def2a3dcea4a433f52a0da4",
+          "artifactDirectory": "",
+          "json": {
+            "path": "",
+            "sha256": ""
+          },
+          "markdown": {
+            "path": "",
+            "sha256": ""
+          },
+          "libraries": [],
+          "recordedWorkingTree": "not-applicable",
+          "note": "Issue #42 hardened the production r2c/c2r backend and did not create a canonical benchmark artifact."
+        },
+        {
+          "issue": 43,
+          "kind": "benchmark",
+          "originalSourceCommit": "f8b41411f2d8a859d3a40e3566ec722b872772ca",
+          "artifactCommit": "18a37ce7c1dbb17965e4614181eb2559e67dabb5",
+          "filteredArtifactCommit": "829209d6707abcdef87d28be5e970a37bc73498c",
+          "artifactDirectory": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a",
+          "json": {
+            "path": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json",
+            "sha256": "85db2321a41b14eae867bbb57fcef25bbe931029b89b93a964ebe515f7d70a5d"
+          },
+          "markdown": {
+            "path": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/summary.md",
+            "sha256": "90c827da0c7f77d55ed88dfa120f84d7d83a4bb8cfd447a75b5dcacbb421afa0"
+          },
+          "libraries": [
+            "MATLAB-bundled FFTW 3.3.8"
+          ],
+          "recordedWorkingTree": "dirty",
+          "note": ""
+        }
+      ]
+    }
+  },
+  "runtimeHashes": [
+    {
+      "path": "FFTWBackend.m",
+      "sha256": "76fc69d1e1149172317f8c8b783a246b0c3db0e4a57ed08f00993671726f024f"
+    },
+    {
+      "path": "RealToComplexTransform.m",
+      "sha256": "deca5458649f4d0600eb85ab02f12ad8193291426ef8fec2d9c497cc8bcd5d0a"
+    },
+    {
+      "path": "RealToRealTransform.m",
+      "sha256": "934e679f01d5fc43034427b7425edefd63f2834e005f76ffd71f97d26455ab38"
+    },
+    {
+      "path": "RealToRealTransformMexFFTW.m",
+      "sha256": "79b4f9b4c9ebd44742fd0fec3d7acfe02c5b3bdf614800ff8784ba149514207e"
+    },
+    {
+      "path": "fftw_r2c.cpp",
+      "sha256": "c5bbaead7a9d83d7da6e0369d0d0ef3a036f1833bfa009874f7ab45ddffeaff1"
+    },
+    {
+      "path": "fftw_r2r.cpp",
+      "sha256": "95532e0bf987d827d689a4b2d06c896d2103655a59aea8738bfcdb6dbcc67348"
+    },
+    {
+      "path": "fftw_backend_support.hpp",
+      "sha256": "96d8553a5701cf6fe819648aba4da67f11095244fbc698156a05032de056d939"
+    },
+    {
+      "path": "fftw3.h",
+      "sha256": "8065447638c2cc8451c415248a89c74de4c5f2d1abbac9966454d7aef1b6839d"
+    },
+    {
+      "path": "resources/mpackage.json",
+      "sha256": "65d852b7d0ca95445c09fb2d8d5e3f9013f659fa1ff2f40429e566c826adbb0b"
+    }
+  ],
+  "failure": [],
+  "artifacts": {
+    "directory": "/Users/jearly/Documents/OceanKitRepositories/fftw-transforms/tools/release-gates/results/20260808T213648455Z-maca64-r2026a",
+    "json": "release-gate.json",
+    "markdown": "summary.md"
+  }
+}
