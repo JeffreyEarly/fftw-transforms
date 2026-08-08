@@ -575,6 +575,11 @@ classdef FFTWBackend
             eligibility.horizontal.sourceIssue = 41;
             eligibility.horizontal.sourceCommit = "a7aef07";
             eligibility.horizontal.sourceArtifact = "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json";
+            eligibility.horizontal.history = FFTWBackend.eligibilityHistory(41, ...
+                "a7aef078e2811543e4ae4f365eb0106261c138c5", ...
+                "28e4b9abc4c8122f7d6b9f3c232fc85fb47a636c", ...
+                eligibility.horizontal.sourceArtifact, ...
+                "f00ec5519529e2025806cf09a082dfc1dda4d45afce304affc9e943aa2fe4def");
 
             eligibility.realToReal.schemaVersion = "issue43-v1";
             eligibility.realToReal.policy = "exact Nz and inclusive bounded batch intervals only; no extrapolation";
@@ -585,7 +590,22 @@ classdef FFTWBackend
             eligibility.realToReal.sourceIssue = 43;
             eligibility.realToReal.sourceCommit = "18a37ce";
             eligibility.realToReal.sourceArtifact = "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json";
+            eligibility.realToReal.history = FFTWBackend.eligibilityHistory(43, ...
+                "18a37ce7c1dbb17965e4614181eb2559e67dabb5", ...
+                "829209d6707abcdef87d28be5e970a37bc73498c", ...
+                eligibility.realToReal.sourceArtifact, ...
+                "85db2321a41b14eae867bbb57fcef25bbe931029b89b93a964ebe515f7d70a5d");
             eligibility.realToReal.records = FFTWBackend.realToRealEligibilityRecords;
+        end
+
+        function history = eligibilityHistory(issue,originalCommit,filteredCommit,artifactPath,artifactSHA256)
+            history.productionRepository = "JeffreyEarly/fftw-transforms";
+            history.historicalRepository = "JeffreyEarly/GLNumericalModelingKit";
+            history.historicalIssue = issue;
+            history.originalCommit = originalCommit;
+            history.filteredCommit = filteredCommit;
+            history.canonicalArtifact = artifactPath;
+            history.artifactSHA256 = artifactSHA256;
         end
 
         function records = realToRealEligibilityRecords()

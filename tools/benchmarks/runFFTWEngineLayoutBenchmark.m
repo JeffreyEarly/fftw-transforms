@@ -223,7 +223,8 @@ result.configuration.fallbackTriggered = false;
 result.configuration.ranking = "lowest complete forward MEX median; raw pipeline median breaks ties";
 result.configuration.rawTimingBoundary = "engine-required pipeline excluding MATLAB allocation and dispatch";
 result.configuration.finalTimingOrder = "round-robin with rotating first operation";
-result.sources = collectSourceProvenance(sourceDirectory);
+result.sources = collectSourceRecord(sourceDirectory);
+result.history = fftwBenchmarkRunHistory;
 result.build = struct;
 result.engines = repmat(emptyEngine(),0,1);
 result.alignmentValidation = repmat(emptyAlignmentValidation(),0,1);
@@ -716,7 +717,7 @@ function value = optionalStructString(inputStruct,fieldName,defaultValue)
 if isfield(inputStruct,fieldName), value = string(inputStruct.(fieldName)); else, value = defaultValue; end
 end
 
-function sources = collectSourceProvenance(sourceDirectory)
+function sources = collectSourceRecord(sourceDirectory)
 paths = fftwBenchmarkPaths;
 names = ["runFFTWEngineLayoutBenchmark.m","buildFFTWEngineBenchmarkMex.m","fftw_engine_benchmark.cpp","vdsp_engine_benchmark.cpp"];
 files = repmat(struct('path',"",'sha256',""),numel(names),1);

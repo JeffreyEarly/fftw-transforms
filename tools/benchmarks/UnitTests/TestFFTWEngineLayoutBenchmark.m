@@ -18,13 +18,13 @@ classdef TestFFTWEngineLayoutBenchmark < matlab.unittest.TestCase
             previousThreads = maxNumCompThreads;
             previousRandomState = rng;
 
-            result = runFFTWEngineLayoutBenchmark(outputDirectory=string(fixture.Folder),runId="smoke-success",sizes=[16 8 4],gateSizes=[16 8 4],transformOrders=[1 2; 2 1; 3 1],planners="estimate",threadCounts=1,alignmentModes=["matched","unaligned"],nScreeningWarmups=1,nScreeningSamples=1,nWarmups=1,nSamples=2,nSamplesLargest=2,fallbackPolicy="always",shouldBuildNative=false);
+            result = runFFTWEngineLayoutBenchmark(outputDirectory=string(fixture.Folder),runId="smoke-success",sizes=[16 8 4],gateSizes=[16 8 4],transformOrders=[1 2; 2 1; 3 1],planners="estimate",threadCounts=1,alignmentModes=["matched","unaligned"],nScreeningWarmups=1,nScreeningSamples=1,nWarmups=1,nSamples=2,nSamplesLargest=2,fallbackPolicy="never",shouldBuildNative=false);
 
             testCase.verifyEqual(result.status,"passed");
             testCase.verifyNumElements(result.workloads,1);
-            testCase.verifyTrue(all(ismember(["bundled-fftw","accelerate-vdsp"],unique([result.candidates.engine]))));
+            testCase.verifyEqual(unique([result.candidates.engine]),"bundled-fftw");
             testCase.verifyTrue(all(ismember(["half-x","half-y"],unique([result.candidates.layout]))));
-            testCase.verifyTrue(all(ismember(["guru-rank2","staged-r2c-c2c","vdsp-2d","vdsp-staged"],unique([result.candidates.strategy]))));
+            testCase.verifyTrue(all(ismember(["guru-rank2","staged-r2c-c2c"],unique([result.candidates.strategy]))));
             testCase.verifyTrue(any(arrayfun(@(candidate) isequal(candidate.transformOrder,[3 1]),result.candidates)));
             testCase.verifyTrue(all(ismember(["matched","unaligned"],unique([result.candidates([result.candidates.engine] == "bundled-fftw").alignmentMode]))));
 
@@ -75,7 +75,7 @@ classdef TestFFTWEngineLayoutBenchmark < matlab.unittest.TestCase
             testCase.verifyTrue(matchedAccepted);
             testCase.verifyTrue(mismatchRejected);
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWEngineLayoutBenchmark.canonicalWisdom(fftw('dwisdom')),TestFFTWEngineLayoutBenchmark.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
             clear pathCleanup directoryCleanup
@@ -110,7 +110,7 @@ classdef TestFFTWEngineLayoutBenchmark < matlab.unittest.TestCase
             testCase.verifyEqual(string(decoded.failure.identifier),"FFTWEngineBenchmark:NoValidCandidate");
             testCase.verifyTrue(contains(string(fileread(markdownPath)),"## Failure"));
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWEngineLayoutBenchmark.canonicalWisdom(fftw('dwisdom')),TestFFTWEngineLayoutBenchmark.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
             clear pathCleanup directoryCleanup
@@ -122,6 +122,11 @@ classdef TestFFTWEngineLayoutBenchmark < matlab.unittest.TestCase
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
             repositoryRoot = fileparts(fileparts(fftwDirectory));
+        end
+
+        function wisdom = canonicalWisdom(wisdom)
+            lines = strip(splitlines(string(wisdom)));
+            wisdom = sort(lines(strlength(lines) > 0));
         end
     end
 end

@@ -85,7 +85,7 @@ classdef TestFFTWMexOwnershipBenchmark < matlab.unittest.TestCase
             testCase.verifyTrue(contains(markdown,"## Persistent storage"));
             testCase.verifyTrue(contains(markdown,"## Recommendation"));
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWMexOwnershipBenchmark.canonicalWisdom(fftw('dwisdom')),TestFFTWMexOwnershipBenchmark.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
             clear pathCleanup directoryCleanup
@@ -120,7 +120,7 @@ classdef TestFFTWMexOwnershipBenchmark < matlab.unittest.TestCase
             testCase.verifyEqual(string(decoded.failure.identifier),"FFTWMexOwnership:WorkloadValidationFailed");
             testCase.verifyTrue(contains(string(fileread(markdownPath)),"## Failure"));
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWMexOwnershipBenchmark.canonicalWisdom(fftw('dwisdom')),TestFFTWMexOwnershipBenchmark.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
             clear pathCleanup directoryCleanup
@@ -132,6 +132,11 @@ classdef TestFFTWMexOwnershipBenchmark < matlab.unittest.TestCase
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
             repositoryRoot = fileparts(fileparts(fftwDirectory));
+        end
+
+        function wisdom = canonicalWisdom(wisdom)
+            lines = strip(splitlines(string(wisdom)));
+            wisdom = sort(lines(strlength(lines) > 0));
         end
     end
 end

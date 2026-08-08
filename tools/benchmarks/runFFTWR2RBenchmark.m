@@ -151,7 +151,8 @@ result.configuration.errorTolerance = options.errorTolerance;
 result.configuration.speedThreshold = options.speedThreshold;
 result.configuration.operationOrder = "four-method round-robin with rotating first operation";
 result.configuration.eligibilityPolicy = "bounded intervals joining adjacent passing batch anchors; no extrapolation";
-result.sources = collectSourceProvenance(sourceDirectory);
+result.sources = collectSourceRecord(sourceDirectory);
+result.history = fftwBenchmarkRunHistory;
 result.build = struct;
 result.engine = struct('module',"",'version',"",'library',"");
 result.workloads = repmat(emptyWorkload,0,1);
@@ -180,17 +181,9 @@ transformCleanup = onCleanup(@() delete(transform));
 forwardSetup.input = physical;
 forwardSetup.reference = coefficients;
 forwardSetup.preallocated = zerosLike(transform.spectralSize,dataType);
-forwardSetup.coordinate = (0:n-1)'/(n-1);
-forwardSetup.frequency = [];
 inverseSetup.input = coefficients;
 inverseSetup.reference = backMatrix*coefficients;
 inverseSetup.preallocated = zerosLike(transform.realSize,dataType);
-if transformType == "cosine"
-    inverseSetup.frequency = (0:n-1)'/(2*(n-1));
-else
-    inverseSetup.frequency = (1:n-2)'/(2*(n-1));
-end
-inverseSetup.coordinate = [];
 
 records = repmat(emptyWorkload,2,1);
 records(1) = benchmarkDirection(transform,forwardMatrix,backMatrix,forwardSetup,"forward",n,batchCount,dataType,transformType,options,nSamples);
@@ -222,7 +215,7 @@ for iRound = 1:nRounds
                 metrics = nan(1,13);
             case "fft-extension"
                 timer = tic;
-                outputs{iMethod} = extensionTransform(setup.input,setup.coordinate,setup.frequency,transformType,direction);
+                outputs{iMethod} = extensionTransform(setup.input,transformType,direction);
                 elapsed = toc(timer);
                 metrics = nan(1,13);
             case "fftw-allocating"
@@ -320,15 +313,27 @@ function metrics = transformMetrics(transform)
 metrics = transform.backendMetrics;
 end
 
-function output = extensionTransform(input,coordinate,frequency,transformType,direction)
+function output = extensionTransform(input,transformType,direction)
 if transformType == "cosine" && direction == "forward"
-    output = CosineTransformForward(coordinate,input,1);
+    n = size(input,1);
+    scratch = ifft(cat(1,input,input(n-1:-1:2,:)),2*n-2,1);
+    output = 2*scratch(1:n,:);
+    output(end,:) = output(end,:)/2;
 elseif transformType == "cosine"
-    output = CosineTransformBack(frequency,input,1);
+    n = size(input,1);
+    scratch = cat(1,0.5*input(1:n-1,:),input(n,:),0.5*input(n-1:-1:2,:));
+    output = ifft(scratch,2*n-2,1)*(2*n-2);
+    output = output(1:n,:);
 elseif direction == "forward"
-    output = SineTransformForward(coordinate,input,1,'both',0);
+    n = size(input,1)-1;
+    scratch = ifft(cat(1,input,-input(n:-1:2,:)),2*n,1);
+    output = -2i*scratch(2:n,:);
 else
-    output = SineTransformBack(frequency,input,1);
+    n = size(input,1);
+    zerosAtEndpoint = zeros(1,size(input,2),'like',input);
+    scratch = 0.5i*cat(1,zerosAtEndpoint,input,zerosAtEndpoint,-input(n:-1:1,:));
+    output = fft(scratch,2*n+2,1);
+    output = output(1:n+2,:);
 end
 end
 
@@ -378,11 +383,19 @@ end
 
 function [forwardMatrix,backMatrix] = referenceMatrices(n,transformType)
 if transformType == "cosine"
-    forwardMatrix = CosineTransformForwardMatrix(n);
-    backMatrix = CosineTransformBackMatrix(n);
+    indices = 0:n-1;
+    cosine = cos(pi*(indices.')*indices/(n-1));
+    forwardMatrix = (2/(n-1))*cosine;
+    forwardMatrix([1 end],:) = forwardMatrix([1 end],:)/2;
+    forwardMatrix(:,[1 end]) = forwardMatrix(:,[1 end])/2;
+    forwardMatrix(1,:) = 2*forwardMatrix(1,:);
+    backMatrix = cosine;
+    backMatrix(:,1) = backMatrix(:,1)/2;
 else
-    forwardMatrix = SineTransformForwardMatrix(n);
-    backMatrix = SineTransformBackMatrix(n);
+    physicalIndices = 0:n-1;
+    spectralIndices = (1:n-2).';
+    forwardMatrix = (2/(n-1))*sin(pi*spectralIndices*physicalIndices/(n-1));
+    backMatrix = sin(pi*(physicalIndices.')*(1:n-2)/(n-1));
 end
 end
 
@@ -462,7 +475,7 @@ function value = optionalStructString(input,fieldName,defaultValue)
 if isfield(input,fieldName), value = string(input.(fieldName)); else, value = defaultValue; end
 end
 
-function sources = collectSourceProvenance(sourceDirectory)
+function sources = collectSourceRecord(sourceDirectory)
 names = ["runFFTWR2RBenchmark.m","RealToRealTransform.m","fftw_r2r.cpp","fftw_backend_support.hpp"];
 paths = fftwBenchmarkPaths;
 sourcePaths = [fullfile(sourceDirectory,names(1)) fullfile(paths.runtimeSourceDirectory,names(2:end))];

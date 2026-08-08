@@ -1,4 +1,4 @@
-# GLNumericalModelingKit provenance
+# GLNumericalModelingKit source history
 
 FFTWTransforms was extracted from
 [`JeffreyEarly/GLNumericalModelingKit`](https://github.com/JeffreyEarly/GLNumericalModelingKit)

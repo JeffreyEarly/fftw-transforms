@@ -156,7 +156,8 @@ result.configuration.normalizationIncludedInTiming = false;
 result.configuration.operationOrder = "round-robin with a rotating first operation";
 result.configuration.errorMetric = "relative infinity norm";
 result.configuration.errorTolerance = options.errorTolerance;
-result.sources = collectSourceProvenance(sourceDirectory);
+result.sources = collectSourceRecord(sourceDirectory);
+result.history = fftwBenchmarkRunHistory;
 result.workloads = repmat(emptyWorkload(),0,1);
 result.failure = [];
 result.artifacts.directory = runDirectory;
@@ -389,7 +390,7 @@ else
 end
 end
 
-function sources = collectSourceProvenance(sourceDirectory)
+function sources = collectSourceRecord(sourceDirectory)
 paths = fftwBenchmarkPaths;
 sourcePaths = [fullfile(sourceDirectory,"runFFTWFeasibilityBaseline.m"), fullfile(paths.runtimeSourceDirectory,"RealToComplexTransform.m"), fullfile(sourceDirectory,"fftw_dft2.cpp")];
 sourceNames = ["runFFTWFeasibilityBaseline.m","RealToComplexTransform.m","fftw_dft2.cpp"];

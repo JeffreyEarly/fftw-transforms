@@ -1,0 +1,135 @@
+{
+  "schemaVersion": "1.0.0",
+  "productionRepository": "JeffreyEarly/fftw-transforms",
+  "historicalRepository": "JeffreyEarly/GLNumericalModelingKit",
+  "historicalPath": "Matlab/Spectral/FFTW",
+  "extraction": {
+    "sourceCommit": "3c5fce2b2df9c892418676ef75ffbc5752216e55",
+    "sourceTree": "d8f8e58de659f8c0af8400c003ca98ab9529e1d5",
+    "filteredTip": "0281a11f0b6ba32d782bb5887460e1661b6a8bcf",
+    "commitMap": "tools/history/gl-fftw-commit-map.tsv"
+  },
+  "records": [
+    {
+      "issue": 37,
+      "kind": "benchmark",
+      "originalSourceCommit": "39d457504d8f340ea83166c07d25e25b7b470505",
+      "artifactCommit": "eaaaabe33936daee6bb291d902ffb63575a93e25",
+      "filteredArtifactCommit": "e52804847e6a7e993502c21d59240262240da26d",
+      "artifactDirectory": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a",
+      "json": {
+        "path": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a/benchmark.json",
+        "sha256": "7301050b1e0d9d2df9f8a91bde3be22abad856dafb1c43672d0b857a18fa71bf"
+      },
+      "markdown": {
+        "path": "tools/benchmarks/results/20260808T040109179Z-maca64-r2026a/summary.md",
+        "sha256": "84a8012da82d4d7d3994ce174667b1ebba77fcce4084ab872d5e07dfd193bd84"
+      },
+      "libraries": ["MATLAB-bundled FFTW 3.3.8"],
+      "recordedWorkingTree": "dirty",
+      "note": ""
+    },
+    {
+      "issue": 38,
+      "kind": "benchmark",
+      "originalSourceCommit": "eaaaabe33936daee6bb291d902ffb63575a93e25",
+      "artifactCommit": "3e0901978c71d8da7d383784b4a016242af201b6",
+      "filteredArtifactCommit": "654c919db2a10152a0d2f23fffa3cfd231d9fd22",
+      "artifactDirectory": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a",
+      "json": {
+        "path": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a/engine-layout-benchmark.json",
+        "sha256": "1bbb30433322629859abda956b706417cb38e43bb93b16a210e2502a2785f1b8"
+      },
+      "markdown": {
+        "path": "tools/benchmarks/results/issue38/20260808T045405991Z-maca64-r2026a/summary.md",
+        "sha256": "e3c24709d2168b4225fbe5788d16bb2621acfc8ac48d430ca6d4cd0c94541f89"
+      },
+      "libraries": ["MATLAB-bundled FFTW 3.3.8", "native FFTW 3.3.11", "Apple Accelerate/vDSP"],
+      "recordedWorkingTree": "dirty",
+      "note": ""
+    },
+    {
+      "issue": 39,
+      "kind": "benchmark",
+      "originalSourceCommit": "3e0901978c71d8da7d383784b4a016242af201b6",
+      "artifactCommit": "9179683a658d0fad0e7e9021abd5cee1369cb06f",
+      "filteredArtifactCommit": "b372fe2ccee1055e76a0e904758aba31a7f53dc1",
+      "artifactDirectory": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a",
+      "json": {
+        "path": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a/ownership-benchmark.json",
+        "sha256": "ef50fc2734a0d34fa0d0bf569f5bd347f3d6dd9dc0719353d9dc4c0c92ff2473"
+      },
+      "markdown": {
+        "path": "tools/benchmarks/results/issue39/20260808T140131445Z-maca64-r2026a/summary.md",
+        "sha256": "bbc9504d477adcf9c1f6ac9882fdce067eb21c935b544cafb32f4d2dc1264cc2"
+      },
+      "libraries": ["MATLAB-bundled FFTW 3.3.8", "native FFTW 3.3.11"],
+      "recordedWorkingTree": "not-recorded",
+      "note": ""
+    },
+    {
+      "issue": 40,
+      "kind": "decision",
+      "originalSourceCommit": "",
+      "artifactCommit": "",
+      "filteredArtifactCommit": "",
+      "artifactDirectory": "",
+      "json": {"path": "", "sha256": ""},
+      "markdown": {"path": "", "sha256": ""},
+      "libraries": [],
+      "recordedWorkingTree": "not-applicable",
+      "note": "Issue #40 owns the readiness decision and did not create a canonical benchmark artifact."
+    },
+    {
+      "issue": 41,
+      "kind": "benchmark",
+      "originalSourceCommit": "9179683a658d0fad0e7e9021abd5cee1369cb06f",
+      "artifactCommit": "a7aef078e2811543e4ae4f365eb0106261c138c5",
+      "filteredArtifactCommit": "28e4b9abc4c8122f7d6b9f3c232fc85fb47a636c",
+      "artifactDirectory": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a",
+      "json": {
+        "path": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/bundled-native-comparison.json",
+        "sha256": "f00ec5519529e2025806cf09a082dfc1dda4d45afce304affc9e943aa2fe4def"
+      },
+      "markdown": {
+        "path": "tools/benchmarks/results/issue41/20260808T153906007Z-maca64-r2026a/summary.md",
+        "sha256": "88fc4c02232c2db5e7f4bd04c5949c428e4deb4b7c99156f36166a4f0a28ca29"
+      },
+      "libraries": ["MATLAB-bundled FFTW 3.3.8", "native FFTW 3.3.11"],
+      "recordedWorkingTree": "dirty",
+      "note": ""
+    },
+    {
+      "issue": 42,
+      "kind": "production-code",
+      "originalSourceCommit": "",
+      "artifactCommit": "f8b41411f2d8a859d3a40e3566ec722b872772ca",
+      "filteredArtifactCommit": "ab229757c47c8f2e1def2a3dcea4a433f52a0da4",
+      "artifactDirectory": "",
+      "json": {"path": "", "sha256": ""},
+      "markdown": {"path": "", "sha256": ""},
+      "libraries": [],
+      "recordedWorkingTree": "not-applicable",
+      "note": "Issue #42 hardened the production r2c/c2r backend and did not create a canonical benchmark artifact."
+    },
+    {
+      "issue": 43,
+      "kind": "benchmark",
+      "originalSourceCommit": "f8b41411f2d8a859d3a40e3566ec722b872772ca",
+      "artifactCommit": "18a37ce7c1dbb17965e4614181eb2559e67dabb5",
+      "filteredArtifactCommit": "829209d6707abcdef87d28be5e970a37bc73498c",
+      "artifactDirectory": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a",
+      "json": {
+        "path": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/real-to-real-benchmark.json",
+        "sha256": "85db2321a41b14eae867bbb57fcef25bbe931029b89b93a964ebe515f7d70a5d"
+      },
+      "markdown": {
+        "path": "tools/benchmarks/results/issue43/20260808T163913752Z-maca64-r2026a/summary.md",
+        "sha256": "90c827da0c7f77d55ed88dfa120f84d7d83a4bb8cfd447a75b5dcacbb421afa0"
+      },
+      "libraries": ["MATLAB-bundled FFTW 3.3.8"],
+      "recordedWorkingTree": "dirty",
+      "note": ""
+    }
+  ]
+}

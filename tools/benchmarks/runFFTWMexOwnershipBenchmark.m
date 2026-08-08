@@ -142,7 +142,8 @@ result.configuration.matlabCompatibility = "R2026a only";
 result.configuration.operationOrder = "round-robin with rotating first operation";
 result.configuration.timingBoundary = "complete MEX call; metrics retrieval excluded";
 result.configuration.recommendationRule = "valid zero-copy gate candidates ranked by geometric-mean complete MEX time; if common FFT-kernel noise leaves no model within 5 percent on both gates, use common-kernel plus measured ownership overhead; within 3 percent prefer direct caller reuse, then other MATLAB ownership, then FFTW custom ownership";
-result.sources = collectSourceProvenance(sourceDirectory);
+result.sources = collectSourceRecord(sourceDirectory);
+result.history = fftwBenchmarkRunHistory;
 result.build = struct;
 result.engines = repmat(emptyEngine(),0,1);
 result.workloads = repmat(emptyWorkload(),0,1);
@@ -824,7 +825,7 @@ end
 environment.hardwareThreads = maxNumCompThreads;
 end
 
-function sources = collectSourceProvenance(sourceDirectory)
+function sources = collectSourceRecord(sourceDirectory)
 names = ["runFFTWMexOwnershipBenchmark.m","buildFFTWMexOwnershipBenchmark.m","fftw_ownership_benchmark.cpp","runFFTWEngineLayoutBenchmark.m","fftw_engine_benchmark.cpp"];
 sources = repmat(struct('path',"",'sha256',""),numel(names),1);
 for iSource = 1:numel(names)

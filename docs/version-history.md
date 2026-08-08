@@ -8,6 +8,8 @@ nav_order: 100
 
 ## Unreleased
 
+- Preserve fixed benchmark history and add authoring/exported-package release gates.
+
 - Extracted the FFTW transform history from GLNumericalModelingKit into a
   dedicated OceanKit authoring repository.
 - Added the FFTWTransforms 0.1.0 MPM contract, source-only licensing policy,

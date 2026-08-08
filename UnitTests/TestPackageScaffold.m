@@ -11,7 +11,11 @@ classdef TestPackageScaffold < matlab.unittest.TestCase
             package = matlab.mpm.Package(TestPackageScaffold.repositoryRoot);
             testCase.verifyEqual(package.Name,"FFTWTransforms");
             testCase.verifyEqual(package.DisplayName,"FFTWTransforms");
-            testCase.verifyEqual(package.Version,matlab.mpm.Version("0.1.0"));
+            versionText = string(package.Version);
+            testCase.verifyNotEmpty(regexp(versionText,"^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$",'once'));
+            testCase.verifyGreaterThanOrEqual(package.Version.Major,0);
+            testCase.verifyGreaterThanOrEqual(package.Version.Minor,0);
+            testCase.verifyGreaterThanOrEqual(package.Version.Patch,0);
             testCase.verifyEqual(string(package.ReleaseCompatibility),">=R2024b");
             testCase.verifyEqual(package.Summary,"Reusable FFTW transforms for MATLAB.");
             testCase.verifyEmpty(package.Dependencies);

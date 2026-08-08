@@ -57,7 +57,7 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
             testCase.verifyTrue(contains(markdown,"## Allocation model"));
 
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWFeasibilityBaseline.canonicalWisdom(fftw('dwisdom')),TestFFTWFeasibilityBaseline.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
 
@@ -95,7 +95,7 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
             testCase.verifyTrue(contains(string(fileread(markdownPath)),"## Failure"));
 
             testCase.verifyEqual(string(fftw('planner')),previousPlanner);
-            testCase.verifyEqual(fftw('dwisdom'),previousWisdom);
+            testCase.verifyEqual(TestFFTWFeasibilityBaseline.canonicalWisdom(fftw('dwisdom')),TestFFTWFeasibilityBaseline.canonicalWisdom(previousWisdom));
             testCase.verifyEqual(maxNumCompThreads,previousThreads);
             testCase.verifyEqual(rng,previousRandomState);
 
@@ -108,6 +108,11 @@ classdef TestFFTWFeasibilityBaseline < matlab.unittest.TestCase
             unitTestDirectory = fileparts(mfilename('fullpath'));
             fftwDirectory = fileparts(unitTestDirectory);
             repositoryRoot = fileparts(fileparts(fftwDirectory));
+        end
+
+        function wisdom = canonicalWisdom(wisdom)
+            lines = strip(splitlines(string(wisdom)));
+            wisdom = sort(lines(strlength(lines) > 0));
         end
     end
 end

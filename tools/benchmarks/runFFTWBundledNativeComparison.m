@@ -172,7 +172,8 @@ result.configuration.inverseOwnership = "uniquely owned destructive input and ca
 result.configuration.selection = "all matched pairs fully sampled; lowest bundled total forward MEX median, raw kernel tiebreaker";
 result.configuration.operationOrder = "six-operation round-robin with rotating first operation";
 result.configuration.issue38ArtifactPath = options.issue38ArtifactPath;
-result.sources = collectSourceProvenance(sourceDirectory);
+result.sources = collectSourceRecord(sourceDirectory);
+result.history = fftwBenchmarkRunHistory;
 result.build = struct;
 result.engines = repmat(emptyEngine,0,1);
 result.comparisons = repmat(emptyComparison,0,1);
@@ -711,7 +712,7 @@ function value = optionalStructString(inputStruct,fieldName,defaultValue)
 if isfield(inputStruct,fieldName), value = string(inputStruct.(fieldName)); else, value = defaultValue; end
 end
 
-function sources = collectSourceProvenance(sourceDirectory)
+function sources = collectSourceRecord(sourceDirectory)
 paths = fftwBenchmarkPaths;
 names = ["runFFTWBundledNativeComparison.m","buildFFTWBundledNativeComparisonMex.m","buildFFTWMexOwnershipBenchmark.m","fftw_ownership_benchmark.cpp","runFFTWEngineLayoutBenchmark.m","fftw_engine_benchmark.cpp"];
 sources.files = repmat(struct('path',"",'sha256',""),numel(names),1);

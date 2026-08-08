@@ -51,12 +51,12 @@ FFTWTransforms is being prepared for its 1.0 release:
 
 1. establish the authoring repository and MPM contract;
 2. migrate and harden the production transform backend;
-3. preserve benchmark provenance and validate an exported package; and
+3. preserve benchmark history and validate an exported package; and
 4. publish `FFTWTransforms 1.0.0` through OceanKit's shared release workflow.
 
 Experimental gateways, benchmark harnesses, canonical results, exploratory
 scripts, and historical `stash` content are quarantined under
-`tools/benchmarks`. They remain available for authoring and provenance work but
+`tools/benchmarks`. They remain available for authoring and history checks but
 are not part of the runtime API or exported package.
 
 ## History
@@ -64,7 +64,7 @@ are not part of the runtime API or exported package.
 Development began in
 [`GLNumericalModelingKit/Matlab/Spectral/FFTW`](https://github.com/JeffreyEarly/GLNumericalModelingKit/tree/3c5fce2b2df9c892418676ef75ffbc5752216e55/Matlab/Spectral/FFTW).
 The subtree's filtered commit history forms the beginning of this repository.
-See [Documentation/PROVENANCE.md](Documentation/PROVENANCE.md) for the pinned
+See [Documentation/HISTORY.md](Documentation/HISTORY.md) for the pinned
 source revision and commit mapping.
 
 ## Licensing
