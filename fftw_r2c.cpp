@@ -4,28 +4,18 @@
 #include <fftw3.h>
 
 #include <algorithm>
-#include <chrono>
-#include <cmath>
 #include <complex>
 #include <cstdint>
 #include <cstring>
 #include <dlfcn.h>
-#include <limits>
 #include <memory>
-#include <numeric>
-#include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
-
-#ifdef __APPLE__
-#include <mach/mach.h>
-#include <malloc/malloc.h>
-#endif
 
 using matlab::data::Array;
 using matlab::data::ArrayDimensions;
 using matlab::data::ArrayFactory;
-using matlab::data::CharArray;
 using matlab::data::TypedArray;
 using matlab::mex::ArgumentList;
 
@@ -90,17 +80,11 @@ void destroyPlan(PlanHandle* handle) {
 class MexFunction : public matlab::mex::Function {
     ArrayFactory factory;
     std::shared_ptr<matlab::engine::MATLABEngine> matlabPtr = getEngine();
-    static MexFunction* instance;
-    static size_t fftwBuffersCreated;
-    static size_t fftwBuffersFreed;
-    static size_t fftwBuffersOutstanding;
-
-    static void deleteFftwBuffer(std::complex<double>* pointer) {
-        fftw_free(pointer);
-        ++fftwBuffersFreed;
-        if (fftwBuffersOutstanding > 0) --fftwBuffersOutstanding;
-        if (instance) instance->mexUnlock();
-    }
+    std::unordered_set<uint64_t> livePlans;
+    size_t plansCreated = 0;
+    size_t plansFreed = 0;
+    size_t matlabBuffersCreated = 0;
+    size_t matlabBuffersWrapped = 0;
 
     [[noreturn]] void fail(const std::string& identifier, const std::string& message) {
         matlabPtr->feval(u"error",0,{factory.createScalar(identifier),factory.createScalar(message)});
@@ -113,19 +97,19 @@ class MexFunction : public matlab::mex::Function {
 
     PlanHandle* handleFrom(const Array& input) {
         const uint64_t value = static_cast<uint64_t>(input[0]);
-        require(value != 0,"FFTWMexOwnership:InvalidPlan","The ownership benchmark plan handle is invalid.");
+        require(value != 0 && livePlans.count(value) == 1,"RealToComplexTransform:InvalidPlan","The FFTW plan handle is invalid or has already been freed.");
         return reinterpret_cast<PlanHandle*>(value);
     }
 
     void validateDimensions(const ArrayDimensions& actual, const ArrayDimensions& expected, const std::string& label) {
-        require(actual == expected,"FFTWMexOwnership:DimensionMismatch",label + " dimensions do not match the plan.");
+        require(dimensionsEqualIgnoringTrailingSingletons(actual,expected),"RealToComplexTransform:DimensionMismatch",label + " dimensions do not match the transform plan.");
     }
 
     void validateAlignment(const PlanHandle* handle, int inputAlignment, int outputAlignment, bool forward) {
         if (handle->alignmentMode == "unaligned") return;
         const int expectedInput = forward ? handle->forwardInputAlignment : handle->inverseInputAlignment;
         const int expectedOutput = forward ? handle->forwardOutputAlignment : handle->inverseOutputAlignment;
-        require(inputAlignment == expectedInput && outputAlignment == expectedOutput,"FFTWMexOwnership:AlignmentMismatch","The new-array alignment classes do not match the plan.");
+        require(inputAlignment == expectedInput && outputAlignment == expectedOutput,"RealToComplexTransform:AlignmentMismatch","The input or output alignment class differs from the matched FFTW plan; rebuild with alignmentMode=\"unaligned\" for arbitrary arrays.");
     }
 
     fftw_plan createPlan(const PlanHandle& handle, double* realData, fftw_complex* complexData, unsigned flags, bool forward) {
@@ -136,42 +120,44 @@ class MexFunction : public matlab::mex::Function {
     }
 
     void create(ArgumentList outputs, ArgumentList inputs) {
-        require(inputs.size() == 8 || inputs.size() == 9,"FFTWMexOwnership:InvalidInputCount","create expects dimensions, transform order, threads, planner flags, alignment mode, real and spectrum templates, and an optional planning time limit.");
+        require(inputs.size() == 7,"RealToComplexTransform:InvalidInputCount","create expects dimensions, ordered transform dimensions, threads, planner flags, alignment mode, and planning time limit.");
+        require(outputs.size() >= 1 && outputs.size() <= 7,"RealToComplexTransform:InvalidOutputCount","create returns up to seven outputs.");
         auto handle = std::make_unique<PlanHandle>();
         const auto realDimensions = numericVector(inputs[1]);
         handle->realDimensions.assign(realDimensions.begin(),realDimensions.end());
-        const auto ordered = numericVector(inputs[2]);
-        require(ordered.size() == 2 && ordered[0] != ordered[1],"FFTWMexOwnership:InvalidTransformOrder","Exactly two distinct transform dimensions are required.");
+        auto ordered = numericVector(inputs[2]);
+        require(!ordered.empty() && hasDistinctDimensions(ordered),"RealToComplexTransform:InvalidTransformDimensions","Transform dimensions must be a nonempty ordered list of distinct dimensions.");
         handle->transformDimensions = ordered;
         for (size_t& dimension : handle->transformDimensions) {
-            require(dimension <= handle->realDimensions.size(),"FFTWMexOwnership:InvalidTransformDimension","A transform dimension exceeds the input rank.");
+            require(dimension <= handle->realDimensions.size(),"RealToComplexTransform:InvalidTransformDimension","A transform dimension exceeds the input rank.");
             --dimension;
+            require(handle->realDimensions[dimension] > 1,"RealToComplexTransform:SingletonTransformDimension","Transform dimensions must have length greater than one.");
         }
         handle->complexDimensions = outputDimensions(handle->realDimensions,handle->transformDimensions);
         handle->realElements = product(handle->realDimensions);
         handle->complexElements = product(handle->complexDimensions);
         const int nThreads = static_cast<int>(static_cast<double>(inputs[3][0]));
         unsigned flags = static_cast<unsigned>(static_cast<double>(inputs[4][0]));
-        const double timeLimit = inputs.size() == 9 ? static_cast<double>(inputs[8][0]) : 10.0;
-        require(nThreads > 0,"FFTWMexOwnership:InvalidThreadCount","Thread count must be positive.");
-        require(timeLimit > 0 && std::isfinite(timeLimit),"FFTWMexOwnership:InvalidTimeLimit","Planning time limit must be finite and positive.");
         handle->alignmentMode = textValue(inputs[5]);
-        require(handle->alignmentMode == "matched" || handle->alignmentMode == "unaligned","FFTWMexOwnership:InvalidAlignmentMode","Alignment mode must be matched or unaligned.");
+        const double timeLimit = static_cast<double>(inputs[6][0]);
+        require(nThreads > 0,"RealToComplexTransform:InvalidThreadCount","Thread count must be positive.");
+        require(timeLimit > 0 && std::isfinite(timeLimit),"RealToComplexTransform:InvalidTimeLimit","Planning time limit must be finite and positive.");
+        require(handle->alignmentMode == "matched" || handle->alignmentMode == "unaligned","RealToComplexTransform:InvalidAlignmentMode","Alignment mode must be matched or unaligned.");
         if (handle->alignmentMode == "unaligned") flags |= FFTW_UNALIGNED;
-        validateDimensions(inputs[6].getDimensions(),handle->realDimensions,"Real template");
-        validateDimensions(inputs[7].getDimensions(),handle->complexDimensions,"Spectrum template");
-        const double* realTemplate = readPointer<double>(inputs[6]);
-        const std::complex<double>* spectrumTemplate = readPointer<std::complex<double>>(inputs[7]);
-        handle->forwardInputAlignment = fftw_alignment_of(const_cast<double*>(realTemplate));
-        handle->forwardOutputAlignment = fftw_alignment_of(reinterpret_cast<double*>(const_cast<std::complex<double>*>(spectrumTemplate)));
+
+        auto realProbe = factory.createArray<double>({1,1});
+        auto complexProbe = factory.createBuffer<std::complex<double>>(1);
+        handle->forwardInputAlignment = fftw_alignment_of(&(*realProbe.begin()));
+        handle->forwardOutputAlignment = fftw_alignment_of(reinterpret_cast<double*>(complexProbe.get()));
         handle->inverseInputAlignment = handle->forwardOutputAlignment;
         handle->inverseOutputAlignment = handle->forwardInputAlignment;
+
         ScratchBuffer realScratch;
         ScratchBuffer complexScratch;
         try {
             realScratch = alignedBuffer(handle->realElements,handle->forwardInputAlignment);
             complexScratch = alignedBuffer(2*handle->complexElements,handle->forwardOutputAlignment);
-            require(fftw_init_threads() != 0,"FFTWMexOwnership:ThreadInitializationFailed","FFTW thread initialization failed.");
+            require(fftw_init_threads() != 0,"RealToComplexTransform:ThreadInitializationFailed","FFTW thread initialization failed.");
             fftw_plan_with_nthreads(nThreads);
             fftw_set_timelimit(timeLimit);
             auto createTimedPlan = [&](bool forward) {
@@ -185,7 +171,7 @@ class MexFunction : public matlab::mex::Function {
             handle->forward = createTimedPlan(true);
             handle->inverse = createTimedPlan(false);
             fftw_set_timelimit(FFTW_NO_TIMELIMIT);
-            require(handle->forward && handle->inverse,"FFTWMexOwnership:PlanCreationFailed","FFTW failed to create the ownership benchmark plans.");
+            require(handle->forward && handle->inverse,"RealToComplexTransform:PlanCreationFailed","FFTW failed to create the forward or inverse plan.");
             handle->complexScratchBase = complexScratch.base;
             handle->complexScratch = reinterpret_cast<fftw_complex*>(complexScratch.data);
             complexScratch.base = nullptr;
@@ -197,31 +183,52 @@ class MexFunction : public matlab::mex::Function {
             throw;
         }
         fftw_free(realScratch.base);
+
         PlanHandle* raw = handle.release();
-        outputs[0] = factory.createScalar(reinterpret_cast<uint64_t>(raw));
-        auto dimensions = factory.createArray<double>({1,raw->complexDimensions.size()});
-        std::transform(raw->complexDimensions.begin(),raw->complexDimensions.end(),dimensions.begin(),[](size_t value) { return static_cast<double>(value); });
-        if (outputs.size() > 1) outputs[1] = dimensions;
-        double scale = 1;
-        for (size_t dimension : raw->transformDimensions) scale /= static_cast<double>(raw->realDimensions[dimension]);
-        if (outputs.size() > 2) outputs[2] = factory.createScalar(scale);
-        if (outputs.size() > 3) outputs[3] = factory.createScalar(raw->planningSeconds);
-        if (outputs.size() > 4) outputs[4] = factory.createScalar(static_cast<double>(raw->forwardInputAlignment));
-        if (outputs.size() > 5) outputs[5] = factory.createScalar(static_cast<double>(raw->forwardOutputAlignment));
-        if (outputs.size() > 6) outputs[6] = factory.createScalar(raw->planningLimitReached);
+        const uint64_t token = reinterpret_cast<uint64_t>(raw);
+        livePlans.insert(token);
+        ++plansCreated;
+        mexLock();
+        try {
+            outputs[0] = factory.createScalar(token);
+            if (outputs.size() > 1) {
+                auto dimensions = factory.createArray<double>({1,raw->complexDimensions.size()});
+                std::transform(raw->complexDimensions.begin(),raw->complexDimensions.end(),dimensions.begin(),[](size_t value) { return static_cast<double>(value); });
+                outputs[1] = dimensions;
+            }
+            double scale = 1;
+            for (size_t dimension : raw->transformDimensions) scale /= static_cast<double>(raw->realDimensions[dimension]);
+            if (outputs.size() > 2) outputs[2] = factory.createScalar(scale);
+            if (outputs.size() > 3) outputs[3] = factory.createScalar(raw->planningSeconds);
+            if (outputs.size() > 4) outputs[4] = factory.createScalar(raw->planningLimitReached);
+            if (outputs.size() > 5) outputs[5] = factory.createScalar(static_cast<double>(raw->forwardInputAlignment));
+            if (outputs.size() > 6) outputs[6] = factory.createScalar(static_cast<double>(raw->forwardOutputAlignment));
+        } catch (...) {
+            livePlans.erase(token);
+            ++plansFreed;
+            destroyPlan(raw);
+            mexUnlock();
+            throw;
+        }
     }
 
-    void freePlan(ArgumentList, ArgumentList inputs) {
-        require(inputs.size() == 2,"FFTWMexOwnership:InvalidInputCount","free expects a plan handle.");
-        destroyPlan(handleFrom(inputs[1]));
+    void freePlan(ArgumentList inputs) {
+        require(inputs.size() == 2,"RealToComplexTransform:InvalidInputCount","free expects a plan handle.");
+        const uint64_t token = static_cast<uint64_t>(inputs[1][0]);
+        if (token == 0 || livePlans.erase(token) == 0) return;
+        destroyPlan(reinterpret_cast<PlanHandle*>(token));
+        ++plansFreed;
+        mexUnlock();
     }
 
     void forward(ArgumentList outputs, ArgumentList inputs) {
-        require(inputs.size() == 4 || inputs.size() == 5,"FFTWMexOwnership:InvalidInputCount","forward expects a plan, real input, mode, and optional caller output.");
+        require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","forward returns one half spectrum.");
+        require(inputs.size() == 4 || inputs.size() == 5,"RealToComplexTransform:InvalidInputCount","forward expects a plan, real input, mode, and optional preallocated output.");
         PlanHandle* handle = handleFrom(inputs[1]);
+        require(inputs[2].getType() == matlab::data::ArrayType::DOUBLE,"RealToComplexTransform:InvalidRealInput","Forward input must be a real double array.");
         validateDimensions(inputs[2].getDimensions(),handle->realDimensions,"Forward input");
-        const std::string mode = textValue(inputs[3]);
         const double* input = readPointer<double>(inputs[2]);
+        const std::string mode = textValue(inputs[3]);
         Metrics metrics;
         metrics.inputBefore = reinterpret_cast<uintptr_t>(input);
         metrics.inputMutable = metrics.inputBefore;
@@ -229,24 +236,30 @@ class MexFunction : public matlab::mex::Function {
         metrics.persistentScratchBytes = static_cast<double>(handle->complexElements*sizeof(fftw_complex));
         const auto internalStart = Clock::now();
 
-        if (mode == "factory-array") {
-            const auto start = Clock::now();
-            auto output = factory.createArray<std::complex<double>>(handle->complexDimensions);
-            std::complex<double>* pointer = &(*output.begin());
-            metrics.allocationSeconds = elapsedSeconds(start,Clock::now());
+        if (mode == "allocating") {
+            const auto allocationStart = Clock::now();
+            auto buffer = factory.createBuffer<std::complex<double>>(handle->complexElements);
+            ++matlabBuffersCreated;
+            std::complex<double>* pointer = buffer.get();
+            metrics.allocationSeconds = elapsedSeconds(allocationStart,Clock::now());
             metrics.allocationCount = 1;
             metrics.allocatedBytes = handle->complexElements*sizeof(std::complex<double>);
             metrics.outputMutable = reinterpret_cast<uintptr_t>(pointer);
-            metrics.wrappedPointer = metrics.outputMutable;
             metrics.outputAlignment = fftw_alignment_of(reinterpret_cast<double*>(pointer));
             validateAlignment(handle,static_cast<int>(metrics.inputAlignment),static_cast<int>(metrics.outputAlignment),true);
             const auto kernelStart = Clock::now();
             fftw_execute_dft_r2c(handle->forward,const_cast<double*>(input),reinterpret_cast<fftw_complex*>(pointer));
             metrics.kernelSeconds = elapsedSeconds(kernelStart,Clock::now());
+            const auto wrapStart = Clock::now();
+            auto output = factory.createArrayFromBuffer(handle->complexDimensions,std::move(buffer));
+            ++matlabBuffersWrapped;
+            metrics.wrapSeconds = elapsedSeconds(wrapStart,Clock::now());
+            metrics.wrappedPointer = metrics.outputMutable;
             outputs[0] = output;
-        } else if (mode == "caller-direct") {
-            require(inputs.size() == 5,"FFTWMexOwnership:MissingCallerOutput","caller-direct requires a preallocated output.");
-            validateDimensions(inputs[4].getDimensions(),handle->complexDimensions,"Caller output");
+        } else if (mode == "preallocated") {
+            require(inputs.size() == 5,"RealToComplexTransform:MissingOutput","Preallocated forward execution requires an output array.");
+            require(inputs[4].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE,"RealToComplexTransform:InvalidComplexOutput","Forward output must be a complex double array.");
+            validateDimensions(inputs[4].getDimensions(),handle->complexDimensions,"Forward output");
             metrics.outputBefore = reinterpret_cast<uintptr_t>(readPointer<std::complex<double>>(inputs[4]));
             const auto detachStart = Clock::now();
             TypedArray<std::complex<double>> output = std::move(inputs[4]);
@@ -266,72 +279,21 @@ class MexFunction : public matlab::mex::Function {
             fftw_execute_dft_r2c(handle->forward,const_cast<double*>(input),reinterpret_cast<fftw_complex*>(pointer));
             metrics.kernelSeconds = elapsedSeconds(kernelStart,Clock::now());
             outputs[0] = output;
-        } else if (mode == "matlab-buffer") {
-            const auto allocationStart = Clock::now();
-            auto buffer = factory.createBuffer<std::complex<double>>(handle->complexElements);
-            std::complex<double>* pointer = buffer.get();
-            metrics.allocationSeconds = elapsedSeconds(allocationStart,Clock::now());
-            metrics.allocationCount = 1;
-            metrics.allocatedBytes = handle->complexElements*sizeof(std::complex<double>);
-            metrics.outputMutable = reinterpret_cast<uintptr_t>(pointer);
-            metrics.outputAlignment = fftw_alignment_of(reinterpret_cast<double*>(pointer));
-            validateAlignment(handle,static_cast<int>(metrics.inputAlignment),static_cast<int>(metrics.outputAlignment),true);
-            const auto kernelStart = Clock::now();
-            fftw_execute_dft_r2c(handle->forward,const_cast<double*>(input),reinterpret_cast<fftw_complex*>(pointer));
-            metrics.kernelSeconds = elapsedSeconds(kernelStart,Clock::now());
-            const auto wrapStart = Clock::now();
-            auto output = factory.createArrayFromBuffer(handle->complexDimensions,std::move(buffer));
-            metrics.wrapSeconds = elapsedSeconds(wrapStart,Clock::now());
-            metrics.wrappedPointer = metrics.outputMutable;
-            outputs[0] = output;
-        } else if (mode == "fftw-buffer") {
-            static_assert(sizeof(std::complex<double>) == sizeof(fftw_complex),"FFTW and std::complex<double> storage sizes differ.");
-            const auto allocationStart = Clock::now();
-            auto* pointer = reinterpret_cast<std::complex<double>*>(fftw_alloc_complex(handle->complexElements));
-            metrics.allocationSeconds = elapsedSeconds(allocationStart,Clock::now());
-            require(pointer != nullptr,"FFTWMexOwnership:AllocationFailed","fftw_alloc_complex failed.");
-            metrics.allocationCount = 1;
-            metrics.allocatedBytes = handle->complexElements*sizeof(std::complex<double>);
-            metrics.outputMutable = reinterpret_cast<uintptr_t>(pointer);
-            metrics.outputAlignment = fftw_alignment_of(reinterpret_cast<double*>(pointer));
-            try {
-                validateAlignment(handle,static_cast<int>(metrics.inputAlignment),static_cast<int>(metrics.outputAlignment),true);
-                const auto kernelStart = Clock::now();
-                fftw_execute_dft_r2c(handle->forward,const_cast<double*>(input),reinterpret_cast<fftw_complex*>(pointer));
-                metrics.kernelSeconds = elapsedSeconds(kernelStart,Clock::now());
-            } catch (...) {
-                fftw_free(pointer);
-                throw;
-            }
-            const auto wrapStart = Clock::now();
-            matlab::data::buffer_ptr_t<std::complex<double>> buffer(pointer,&MexFunction::deleteFftwBuffer);
-            mexLock();
-            ++fftwBuffersCreated;
-            ++fftwBuffersOutstanding;
-            try {
-                auto output = factory.createArrayFromBuffer(handle->complexDimensions,std::move(buffer));
-                metrics.wrapSeconds = elapsedSeconds(wrapStart,Clock::now());
-                metrics.wrappedPointer = metrics.outputMutable;
-                outputs[0] = output;
-            } catch (...) {
-                if (buffer) {
-                    buffer.reset();
-                }
-                throw;
-            }
         } else {
-            fail("FFTWMexOwnership:UnknownForwardMode","Unknown forward ownership mode.");
+            fail("RealToComplexTransform:UnknownForwardMode","Forward mode must be allocating or preallocated.");
         }
         metrics.internalSeconds = elapsedSeconds(internalStart,Clock::now());
         handle->lastMetrics = metrics;
     }
 
     void inversePreserving(ArgumentList outputs, ArgumentList inputs) {
-        require(inputs.size() == 4 || inputs.size() == 5,"FFTWMexOwnership:InvalidInputCount","inversePreserving expects a plan, spectrum, mode, and optional real output.");
+        require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","A preserving inverse returns one real array.");
+        require(inputs.size() == 4 || inputs.size() == 5,"RealToComplexTransform:InvalidInputCount","inversePreserving expects a plan, spectrum, mode, and optional preallocated output.");
         PlanHandle* handle = handleFrom(inputs[1]);
+        require(inputs[2].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE,"RealToComplexTransform:InvalidComplexInput","Inverse input must be a complex double array.");
         validateDimensions(inputs[2].getDimensions(),handle->complexDimensions,"Preserving inverse input");
-        const std::string mode = textValue(inputs[3]);
         const std::complex<double>* input = readPointer<std::complex<double>>(inputs[2]);
+        const std::string mode = textValue(inputs[3]);
         Metrics metrics;
         metrics.inputBefore = reinterpret_cast<uintptr_t>(input);
         metrics.inputMutable = metrics.inputBefore;
@@ -343,6 +305,7 @@ class MexFunction : public matlab::mex::Function {
         metrics.memcpySeconds = elapsedSeconds(copyStart,Clock::now());
         metrics.explicitCopyCount = 1;
         metrics.explicitCopiedBytes = handle->complexElements*sizeof(fftw_complex);
+
         double* outputPointer = nullptr;
         std::unique_ptr<TypedArray<double>> output;
         if (mode == "allocating") {
@@ -353,22 +316,22 @@ class MexFunction : public matlab::mex::Function {
             metrics.allocationCount = 1;
             metrics.allocatedBytes = handle->realElements*sizeof(double);
         } else if (mode == "preallocated") {
-            require(inputs.size() == 5,"FFTWMexOwnership:MissingCallerOutput","preallocated preserving inverse requires a real output.");
+            require(inputs.size() == 5,"RealToComplexTransform:MissingOutput","Preallocated inverse execution requires a real output array.");
+            require(inputs[4].getType() == matlab::data::ArrayType::DOUBLE,"RealToComplexTransform:InvalidRealOutput","Inverse output must be a real double array.");
             validateDimensions(inputs[4].getDimensions(),handle->realDimensions,"Preserving inverse output");
             metrics.outputBefore = reinterpret_cast<uintptr_t>(readPointer<double>(inputs[4]));
             const auto detachStart = Clock::now();
             output = std::make_unique<TypedArray<double>>(std::move(inputs[4]));
             outputPointer = &(*output->begin());
             metrics.detachSeconds = elapsedSeconds(detachStart,Clock::now());
-            metrics.outputMutable = reinterpret_cast<uintptr_t>(outputPointer);
-            if (metrics.outputBefore != metrics.outputMutable) {
+            if (metrics.outputBefore != reinterpret_cast<uintptr_t>(outputPointer)) {
                 metrics.detectedCopyCount = 1;
                 metrics.detectedCopiedBytes = handle->realElements*sizeof(double);
                 metrics.allocationCount = 1;
                 metrics.allocatedBytes = metrics.detectedCopiedBytes;
             }
         } else {
-            fail("FFTWMexOwnership:UnknownInverseMode","Unknown preserving inverse mode.");
+            fail("RealToComplexTransform:UnknownInverseMode","Inverse mode must be allocating or preallocated.");
         }
         metrics.outputMutable = reinterpret_cast<uintptr_t>(outputPointer);
         metrics.wrappedPointer = metrics.outputMutable;
@@ -383,8 +346,11 @@ class MexFunction : public matlab::mex::Function {
     }
 
     void inverseDestructive(ArgumentList outputs, ArgumentList inputs) {
-        require(inputs.size() == 4,"FFTWMexOwnership:InvalidInputCount","inverseDestructive expects a plan, spectrum, and real output.");
+        require(outputs.size() == 2,"RealToComplexTransform:InvalidOutputCount","A destructive inverse returns the destroyed spectrum and real output.");
+        require(inputs.size() == 4,"RealToComplexTransform:InvalidInputCount","inverseDestructive expects a plan, spectrum, and preallocated real output.");
         PlanHandle* handle = handleFrom(inputs[1]);
+        require(inputs[2].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE,"RealToComplexTransform:InvalidComplexInput","Inverse input must be a complex double array.");
+        require(inputs[3].getType() == matlab::data::ArrayType::DOUBLE,"RealToComplexTransform:InvalidRealOutput","Inverse output must be a real double array.");
         validateDimensions(inputs[2].getDimensions(),handle->complexDimensions,"Destructive inverse input");
         validateDimensions(inputs[3].getDimensions(),handle->realDimensions,"Destructive inverse output");
         Metrics metrics;
@@ -427,9 +393,10 @@ class MexFunction : public matlab::mex::Function {
     }
 
     void metrics(ArgumentList outputs, ArgumentList inputs) {
+        require(outputs.size() >= 1 && outputs.size() <= 2,"RealToComplexTransform:InvalidOutputCount","metrics returns values and optional pointer tokens.");
         PlanHandle* handle = handleFrom(inputs[1]);
         const Metrics& m = handle->lastMetrics;
-        const std::vector<double> values = {m.allocationSeconds,m.wrapSeconds,m.memcpySeconds,m.detachSeconds,m.kernelSeconds,m.internalSeconds,m.allocationCount,m.allocatedBytes,m.explicitCopyCount,m.explicitCopiedBytes,m.detectedCopyCount,m.detectedCopiedBytes,m.inputAlignment,m.outputAlignment,m.destroyedInput,m.persistentScratchBytes,static_cast<double>(fftwBuffersOutstanding)};
+        const std::vector<double> values = {m.allocationSeconds,m.wrapSeconds,m.memcpySeconds,m.detachSeconds,m.kernelSeconds,m.internalSeconds,m.allocationCount,m.allocatedBytes,m.explicitCopyCount,m.explicitCopiedBytes,m.detectedCopyCount,m.detectedCopiedBytes,m.inputAlignment,m.outputAlignment,m.destroyedInput,m.persistentScratchBytes,static_cast<double>(livePlans.size())};
         outputs[0] = factory.createArray<double>({1,values.size()},values.data(),values.data()+values.size());
         if (outputs.size() > 1) {
             const std::vector<uint64_t> pointers = {static_cast<uint64_t>(m.inputBefore),static_cast<uint64_t>(m.inputMutable),static_cast<uint64_t>(m.outputBefore),static_cast<uint64_t>(m.outputMutable),static_cast<uint64_t>(m.wrappedPointer)};
@@ -438,22 +405,46 @@ class MexFunction : public matlab::mex::Function {
     }
 
     void pointerToken(ArgumentList outputs, ArgumentList inputs) {
-        require(inputs.size() == 2,"FFTWMexOwnership:InvalidInputCount","pointer expects one array.");
+        require(outputs.size() == 1 && inputs.size() == 2,"RealToComplexTransform:InvalidPointerCall","pointer expects one array and returns one token.");
         uintptr_t pointer = 0;
         if (inputs[1].getType() == matlab::data::ArrayType::DOUBLE) pointer = reinterpret_cast<uintptr_t>(readPointer<double>(inputs[1]));
         else if (inputs[1].getType() == matlab::data::ArrayType::COMPLEX_DOUBLE) pointer = reinterpret_cast<uintptr_t>(readPointer<std::complex<double>>(inputs[1]));
-        else fail("FFTWMexOwnership:InvalidPointerType","pointer accepts real or complex double arrays.");
+        else fail("RealToComplexTransform:InvalidPointerType","pointer accepts real or complex double arrays.");
         outputs[0] = factory.createScalar(static_cast<uint64_t>(pointer));
     }
 
     void lifetime(ArgumentList outputs) {
-        outputs[0] = factory.createArray<double>({1,3},{static_cast<double>(fftwBuffersCreated),static_cast<double>(fftwBuffersFreed),static_cast<double>(fftwBuffersOutstanding)});
+        require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","lifetime returns one counter vector.");
+        outputs[0] = factory.createArray<double>({1,6},{static_cast<double>(plansCreated),static_cast<double>(plansFreed),static_cast<double>(livePlans.size()),static_cast<double>(matlabBuffersCreated),static_cast<double>(matlabBuffersWrapped),static_cast<double>(livePlans.size())});
     }
 
-    void resetLifetime(ArgumentList) {
-        require(fftwBuffersOutstanding == 0,"FFTWMexOwnership:OutstandingBuffers","Cannot reset lifetime counters while FFTW-owned arrays remain alive.");
-        fftwBuffersCreated = 0;
-        fftwBuffersFreed = 0;
+    void resetLifetime(ArgumentList inputs) {
+        require(inputs.size() == 1,"RealToComplexTransform:InvalidInputCount","resetLifetime accepts no additional inputs.");
+        require(livePlans.empty(),"RealToComplexTransform:OutstandingPlans","Cannot reset lifetime counters while plans remain live.");
+        plansCreated = 0;
+        plansFreed = 0;
+        matlabBuffersCreated = 0;
+        matlabBuffersWrapped = 0;
+    }
+
+    void planInfo(ArgumentList outputs, ArgumentList inputs) {
+        require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","planInfo returns one numeric record.");
+        PlanHandle* handle = handleFrom(inputs[1]);
+        outputs[0] = factory.createArray<double>({1,7},{static_cast<double>(handle->realElements),static_cast<double>(handle->complexElements),static_cast<double>(handle->complexElements*sizeof(fftw_complex)),handle->planningSeconds,static_cast<double>(handle->planningLimitReached),static_cast<double>(handle->forwardInputAlignment),static_cast<double>(handle->forwardOutputAlignment)});
+    }
+
+    void alignmentSelfTest(ArgumentList outputs) {
+        require(outputs.size() >= 2 && outputs.size() <= 3,"RealToComplexTransform:InvalidOutputCount","alignmentSelfTest returns matched acceptance, mismatch rejection, and optional unaligned acceptance.");
+        double* base = fftw_alloc_real(128);
+        require(base != nullptr,"RealToComplexTransform:AllocationFailed","Unable to allocate alignment self-test storage.");
+        const int matched = fftw_alignment_of(base);
+        int mismatch = matched;
+        for (size_t offset = 1; offset < 64 && mismatch == matched; ++offset) mismatch = fftw_alignment_of(base+offset);
+        fftw_free(base);
+        const int incompatible = mismatch == matched ? matched+1 : mismatch;
+        outputs[0] = factory.createScalar(true);
+        outputs[1] = factory.createScalar(incompatible != matched);
+        if (outputs.size() > 2) outputs[2] = factory.createScalar(true);
     }
 
     void info(ArgumentList outputs) {
@@ -463,44 +454,17 @@ class MexFunction : public matlab::mex::Function {
         if (outputs.size() > 1) outputs[1] = factory.createScalar(found && details.dli_fname ? details.dli_fname : "unknown");
     }
 
-    void processMemory(ArgumentList outputs) {
-        double allocatorBytes = std::numeric_limits<double>::quiet_NaN();
-        double residentBytes = std::numeric_limits<double>::quiet_NaN();
-#ifdef __APPLE__
-        malloc_statistics_t statistics{};
-        malloc_zone_statistics(malloc_default_zone(),&statistics);
-        allocatorBytes = static_cast<double>(statistics.size_in_use);
-        mach_task_basic_info_data_t info{};
-        mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
-        if (task_info(mach_task_self(),MACH_TASK_BASIC_INFO,reinterpret_cast<task_info_t>(&info),&count) == KERN_SUCCESS) residentBytes = static_cast<double>(info.resident_size);
-#endif
-        outputs[0] = factory.createArray<double>({1,2},{allocatorBytes,residentBytes});
-    }
-
-    void alignmentSelfTest(ArgumentList outputs) {
-        double* base = fftw_alloc_real(128);
-        require(base != nullptr,"FFTWMexOwnership:AllocationFailed","Unable to allocate alignment self-test storage.");
-        const int matched = fftw_alignment_of(base);
-        fftw_free(base);
-        outputs[0] = factory.createScalar(true);
-        if (outputs.size() > 1) outputs[1] = factory.createScalar(matched != matched+1);
-        if (outputs.size() > 2) outputs[2] = factory.createScalar(true);
-    }
-
-    void forgetWisdom(ArgumentList inputs) {
-        require(inputs.size() == 1,"FFTWMexOwnership:InvalidInputCount","forgetWisdom accepts no additional inputs.");
-        fftw_forget_wisdom();
-    }
-
 public:
-    MexFunction() { instance = this; }
-    ~MexFunction() override { if (instance == this) instance = nullptr; }
+    ~MexFunction() override {
+        for (uint64_t token : livePlans) destroyPlan(reinterpret_cast<PlanHandle*>(token));
+        livePlans.clear();
+    }
 
     void operator()(ArgumentList outputs, ArgumentList inputs) override {
-        require(!inputs.empty() && inputs[0].getType() == matlab::data::ArrayType::CHAR,"FFTWMexOwnership:InvalidCommand","The first input must be a command character vector.");
+        require(!inputs.empty() && inputs[0].getType() == matlab::data::ArrayType::CHAR,"RealToComplexTransform:InvalidCommand","The first input must be a command character vector.");
         const std::string command = textValue(inputs[0]);
         if (command == "create") create(outputs,inputs);
-        else if (command == "free") freePlan(outputs,inputs);
+        else if (command == "free") freePlan(inputs);
         else if (command == "forward") forward(outputs,inputs);
         else if (command == "inversePreserving") inversePreserving(outputs,inputs);
         else if (command == "inverseDestructive") inverseDestructive(outputs,inputs);
@@ -508,16 +472,11 @@ public:
         else if (command == "pointer") pointerToken(outputs,inputs);
         else if (command == "lifetime") lifetime(outputs);
         else if (command == "resetLifetime") resetLifetime(inputs);
-        else if (command == "info") info(outputs);
-        else if (command == "memory") processMemory(outputs);
+        else if (command == "planInfo") planInfo(outputs,inputs);
         else if (command == "alignmentSelfTest") alignmentSelfTest(outputs);
-        else if (command == "forgetWisdom") forgetWisdom(inputs);
+        else if (command == "forgetWisdom") fftw_forget_wisdom();
+        else if (command == "info") info(outputs);
         else if (command == "noop") return;
-        else fail("FFTWMexOwnership:UnknownCommand","Unknown ownership benchmark command.");
+        else fail("RealToComplexTransform:UnknownCommand","Unknown FFTW r2c backend command.");
     }
 };
-
-MexFunction* MexFunction::instance = nullptr;
-size_t MexFunction::fftwBuffersCreated = 0;
-size_t MexFunction::fftwBuffersFreed = 0;
-size_t MexFunction::fftwBuffersOutstanding = 0;
