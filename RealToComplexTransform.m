@@ -190,9 +190,22 @@ classdef RealToComplexTransform < handle
             sourceDirectory = fileparts(mfilename('fullpath'));
             sourcePath = fullfile(sourceDirectory,'fftw_r2c.cpp');
             includeArgument = "-I" + sourceDirectory;
+            stageDirectory = string(tempname);
+            [created,message] = mkdir(stageDirectory);
+            if ~created
+                error('RealToComplexTransform:StagingFailed','Unable to create the MEX staging directory: %s',message);
+            end
+            stageCleanup = onCleanup(@() rmdir(stageDirectory,'s'));
+            mex('-R2018a','-outdir',stageDirectory,'-output','fftw_r2c',includeArgument,sourcePath,fftwlibpath);
             clear fftw_r2c
-            mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_r2c',includeArgument,sourcePath,fftwlibpath);
+            stagedPath = fullfile(stageDirectory,"fftw_r2c." + mexext);
+            destinationPath = fullfile(sourceDirectory,"fftw_r2c." + mexext);
+            [copied,message] = copyfile(stagedPath,destinationPath,'f');
+            if ~copied
+                error('RealToComplexTransform:InstallFailed','Unable to install fftw_r2c: %s',message);
+            end
             rehash
+            clear stageCleanup
         end
     end
 

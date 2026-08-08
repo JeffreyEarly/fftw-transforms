@@ -202,9 +202,22 @@ classdef RealToRealTransform < handle
             sourceDirectory = fileparts(mfilename('fullpath'));
             sourcePath = fullfile(sourceDirectory,'fftw_r2r.cpp');
             includeArgument = "-I" + sourceDirectory;
+            stageDirectory = string(tempname);
+            [created,message] = mkdir(stageDirectory);
+            if ~created
+                error('RealToRealTransform:StagingFailed','Unable to create the MEX staging directory: %s',message);
+            end
+            stageCleanup = onCleanup(@() rmdir(stageDirectory,'s'));
+            mex('-R2018a','-outdir',stageDirectory,'-output','fftw_r2r',includeArgument,sourcePath,fftwlibpath);
             clear fftw_r2r
-            mex('-R2018a','-outdir',sourceDirectory,'-output','fftw_r2r',includeArgument,sourcePath,fftwlibpath);
+            stagedPath = fullfile(stageDirectory,"fftw_r2r." + mexext);
+            destinationPath = fullfile(sourceDirectory,"fftw_r2r." + mexext);
+            [copied,message] = copyfile(stagedPath,destinationPath,'f');
+            if ~copied
+                error('RealToRealTransform:InstallFailed','Unable to install fftw_r2r: %s',message);
+            end
             rehash
+            clear stageCleanup
         end
     end
 

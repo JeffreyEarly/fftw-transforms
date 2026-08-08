@@ -198,8 +198,12 @@ elseif bumpType == "major"
     source = matlab.mpm.Version(sourceVersion);
     expected = string(matlab.mpm.Version(source.Major + 1,0,0));
     requireEqual(candidateVersion,expected,'FFTWTransforms:ReleaseGateVersionConfiguration','candidateVersion does not match the requested major bump.');
+elseif bumpType == "patch"
+    source = matlab.mpm.Version(sourceVersion);
+    expected = string(matlab.mpm.Version(source.Major,source.Minor,source.Patch + 1));
+    requireEqual(candidateVersion,expected,'FFTWTransforms:ReleaseGateVersionConfiguration','candidateVersion does not match the requested patch bump.');
 else
-    error('FFTWTransforms:ReleaseGateBumpType','Release-gate bumpType must be "major" or "none".');
+    error('FFTWTransforms:ReleaseGateBumpType','Release-gate bumpType must be "major", "patch", or "none".');
 end
 end
 

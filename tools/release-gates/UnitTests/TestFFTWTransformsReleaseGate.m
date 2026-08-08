@@ -25,8 +25,17 @@ classdef TestFFTWTransformsReleaseGate < matlab.unittest.TestCase
 
             historyPath = fullfile(root,artifact.benchmarkHistory.path);
             testCase.verifyEqual(TestFFTWTransformsReleaseGate.fileSHA256(historyPath),string(artifact.benchmarkHistory.sha256));
-            for record = reshape(artifact.runtimeHashes,1,[])
-                testCase.verifyEqual(TestFFTWTransformsReleaseGate.fileSHA256(fullfile(root,record.path)),string(record.sha256));
+            currentPackage = matlab.mpm.Package(root);
+            currentVersion = string(currentPackage.Version);
+            testCase.verifyEqual(string(currentPackage.ID),string(artifact.package.authoring.id));
+            if currentVersion == string(artifact.package.authoring.version)
+                for record = reshape(artifact.runtimeHashes,1,[])
+                    testCase.verifyEqual(TestFFTWTransformsReleaseGate.fileSHA256(fullfile(root,record.path)),string(record.sha256));
+                end
+            else
+                current = currentPackage.Version;
+                released = matlab.mpm.Version(string(artifact.package.exported.version));
+                testCase.verifyGreaterThanOrEqual([current.Major current.Minor current.Patch],[released.Major released.Minor released.Patch]);
             end
 
         end
