@@ -20,3 +20,6 @@ nav_order: 100
   build, static eligibility, and structured fallback contracts.
 - Quarantined feasibility benchmarks and canonical artifacts under the
   authoring-only `tools/benchmarks` tree.
+## [1.0.0] - 2026-08-08
+- Initial release with zero-copy r2c/c2r, DCT-I/DST-I, and validated MATLAB-bundled FFTW capability detection.
+
