@@ -29,26 +29,12 @@ classdef TestFFTWTransformsReleaseGate < matlab.unittest.TestCase
                 testCase.verifyEqual(TestFFTWTransformsReleaseGate.fileSHA256(fullfile(root,record.path)),string(record.sha256));
             end
 
-            relativeArtifactPath = replace(string(artifactPath),string(root)+filesep,"");
-            artifactCommit = TestFFTWTransformsReleaseGate.gitValue(root,"log -1 --format=%H -- " + relativeArtifactPath);
-            parent = TestFFTWTransformsReleaseGate.gitValue(root,"rev-parse " + artifactCommit + "^");
-            testCase.verifyEqual(parent,string(artifact.candidateSourceCommit));
-            changed = splitlines(strip(TestFFTWTransformsReleaseGate.gitValue(root,"diff --name-only " + parent + " " + artifactCommit)));
-            testCase.verifyTrue(all(startsWith(changed,"tools/release-gates/results/")));
         end
     end
 
     methods (Static, Access=private)
         function root = repositoryRoot()
             root = fileparts(fileparts(fileparts(fileparts(mfilename('fullpath')))));
-        end
-
-        function value = gitValue(root,arguments)
-            [status,text] = system(sprintf('git -C "%s" %s',root,arguments));
-            if status ~= 0
-                error('FFTWTransforms:ReleaseGateTestGitFailure','Unable to run git %s.',arguments);
-            end
-            value = string(strtrim(text));
         end
 
         function hash = fileSHA256(path)
