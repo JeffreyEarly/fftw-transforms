@@ -38,9 +38,11 @@ the two physical endpoints from the coefficient array, ignores forward input
 endpoints, and restores exact zero inverse endpoints.
 
 Allocating calls return MATLAB-managed arrays. Caller-preallocated outputs must
-be reassigned. A preserving complex-to-real inverse copies the half spectrum
-once, while the destructive inverse avoids an explicit spectrum copy for a
-uniquely owned input; both its spectrum and real output must be reassigned.
+be reassigned. A preserving complex-to-real inverse lazily allocates reusable
+half-spectrum scratch on its first call and copies the input once. Construction,
+forward transforms, and destructive-only use retain no spectrum-sized scratch.
+The destructive inverse avoids an explicit spectrum copy for a uniquely owned
+input; both its spectrum and real output must be reassigned.
 
 See the [transform contracts](Documentation/WebsiteDocumentation/transforms.md)
 for examples and ownership details.

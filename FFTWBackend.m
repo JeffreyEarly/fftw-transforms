@@ -503,6 +503,10 @@ classdef FFTWBackend
             capabilities.features.c2r = FFTWBackend.emptyFeature("c2r","fftw_r2c");
             capabilities.features.dct1 = FFTWBackend.emptyFeature("dct1","fftw_r2r");
             capabilities.features.dst1 = FFTWBackend.emptyFeature("dst1","fftw_r2r");
+            capabilities.memory.preservingInverseScratch.policy = "lazy-on-first-preserving-c2r";
+            capabilities.memory.preservingInverseScratch.allocatedBytesAtPlanCreation = 0;
+            capabilities.memory.preservingInverseScratch.allocatedBytesForDestructiveOnlyUse = 0;
+            capabilities.memory.preservingInverseScratch.bytesPerComplexElement = 16;
             capabilities.eligibility = FFTWBackend.eligibility;
             capabilities.build.isRequired = true;
             capabilities.build.isPossible = capabilities.compiler.isAvailable && capabilities.library.exists;

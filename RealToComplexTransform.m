@@ -7,10 +7,12 @@ classdef RealToComplexTransform < handle
     % unnormalized convention; multiply their result by `scaleFactor` to
     % reproduce MATLAB's normalized inverse.
     %
-    % Preserving inverse methods copy the half spectrum exactly once because
-    % FFTW destroys multidimensional c2r inputs. The destructive method avoids
-    % that copy for uniquely owned arrays and returns the destroyed spectrum,
-    % which callers must reassign.
+    % Preserving inverse methods lazily allocate a reusable half-spectrum
+    % scratch buffer and copy the input exactly once because FFTW destroys
+    % multidimensional c2r inputs. Construction, forward transforms, and
+    % destructive-only use retain no spectrum-sized scratch. The destructive
+    % method avoids the copy for uniquely owned arrays and returns the
+    % destroyed spectrum, which callers must reassign.
     %
     % ```matlab
     % transform = RealToComplexTransform([128 128 32],dims=[2 1]);
@@ -125,8 +127,10 @@ classdef RealToComplexTransform < handle
         function x = transformBack(self,xbar)
             % Apply an input-preserving inverse into a new real array.
             %
-            % This method performs exactly one half-spectrum copy. Multiply the
-            % returned array by `scaleFactor` for MATLAB-style normalization.
+            % On the first preserving call, this method lazily allocates its
+            % reusable scratch buffer and performs exactly one half-spectrum
+            % copy. Multiply the returned array by `scaleFactor` for
+            % MATLAB-style normalization.
             %
             % - Topic: Apply transforms
             % - Parameter xbar: Complex half spectrum with shape `complexSize`.

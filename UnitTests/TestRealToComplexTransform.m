@@ -62,6 +62,10 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
             testCase.verifyEqual(info(1),prod(sz));
             testCase.verifyEqual(info(2),prod(complexSize));
             testCase.verifyEqual(info(3),16*prod(complexSize));
+            testCase.verifyEqual(info(8),0);
+            [scratchPolicy,scratchBytes] = fftw_r2c('scratchInfo',plan);
+            testCase.verifyEqual(string(scratchPolicy),"lazy-on-first-preserving-c2r");
+            testCase.verifyEqual(scratchBytes,[16*prod(complexSize) 0]);
 
             rng(41,'twister');
             input = randn(sz);
@@ -69,6 +73,7 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
             [metrics,pointers] = fftw_r2c('metrics',plan);
             returnedPointer = fftw_r2c('pointer',spectrum);
             testCase.verifyEqual(metrics(9:12),zeros(1,4));
+            testCase.verifyEqual(metrics(16),0);
             testCase.verifyEqual(pointers(4),pointers(5));
             testCase.verifyEqual(returnedPointer,pointers(5));
 
@@ -84,12 +89,18 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
             metrics = fftw_r2c('metrics',plan);
             testCase.verifyEqual(metrics(9),1);
             testCase.verifyEqual(metrics(10),16*prod(complexSize));
+            testCase.verifyEqual(metrics(16),16*prod(complexSize));
+            testCase.verifyGreaterThanOrEqual(metrics(18),0);
+            testCase.verifyEqual(metrics(19),1);
+            [~,scratchBytes] = fftw_r2c('scratchInfo',plan);
+            testCase.verifyEqual(scratchBytes,[16*prod(complexSize) 16*prod(complexSize)]);
             testCase.verifyEqual(preservingInput,preservingBefore);
 
             [preallocatedInverseMetrics,preallocatedInversePointers,preservedOutput] = TestRealToComplexTransform.preallocatedPreservingCall(plan,preservingInput,sz);
             testCase.verifyEqual(preallocatedInverseMetrics(9),1);
             testCase.verifyEqual(preallocatedInverseMetrics(10),16*prod(complexSize));
             testCase.verifyEqual(preallocatedInverseMetrics(11:12),[0 0]);
+            testCase.verifyEqual(preallocatedInverseMetrics(19),0);
             testCase.verifyEqual(preallocatedInversePointers(3),preallocatedInversePointers(4));
             testCase.verifyLessThanOrEqual(TestRealToComplexTransform.relativeError(preservedOutput/prod(sz(dimensions)),input),1e-12);
 
@@ -114,6 +125,53 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
             testCase.verifyEqual(lifetime(1:3),[1 1 0]);
             testCase.verifyEqual(lifetime(4),lifetime(5));
             testCase.verifyEqual(lifetime(6),0);
+            testCase.verifyEqual(lifetime(7:10),[1 1 0 0]);
+        end
+
+        function testDestructiveOnlyPlanRetainsNoScratch(testCase)
+            fftw_r2c('resetLifetime');
+            sz = [16 8 4];
+            dimensions = [2 1];
+            [plan,complexSize] = fftw_r2c('create',sz,dimensions,1,64,'unaligned',1);
+            cleanup = onCleanup(@() fftw_r2c('free',plan));
+            [~,scratchBytes] = fftw_r2c('scratchInfo',plan);
+            testCase.verifyEqual(scratchBytes,[16*prod(complexSize) 0]);
+
+            input = reshape(sin((1:prod(sz))/7),sz);
+            spectrum = fftw_r2c('forward',plan,input,'allocating');
+            metrics = fftw_r2c('metrics',plan);
+            testCase.verifyEqual(metrics(16),0);
+            testCase.verifyEqual(metrics(19),0);
+
+            output = zeros(sz);
+            [spectrum,output] = fftw_r2c('inverseDestructive',plan,spectrum,output); %#ok<ASGLU>
+            metrics = fftw_r2c('metrics',plan);
+            testCase.verifyEqual(metrics(16),0);
+            testCase.verifyEqual(metrics(9:10),[0 0]);
+            testCase.verifyLessThanOrEqual(TestRealToComplexTransform.relativeError(output/prod(sz(dimensions)),input),1e-12);
+            [~,scratchBytes] = fftw_r2c('scratchInfo',plan);
+            testCase.verifyEqual(scratchBytes,[16*prod(complexSize) 0]);
+
+            fftw_r2c('free',plan);
+            clear cleanup
+            lifetime = fftw_r2c('lifetime');
+            testCase.verifyEqual(lifetime(7:10),zeros(1,4));
+        end
+
+        function testScratchIsReleasedAfterPreservingFailure(testCase)
+            fftw_r2c('resetLifetime');
+            sz = [8 6 3];
+            [plan,complexSize] = fftw_r2c('create',sz,[2 1],1,64,'unaligned',1);
+            cleanup = onCleanup(@() fftw_r2c('free',plan));
+            spectrum = complex(zeros(complexSize));
+            testCase.verifyError(@() TestRealToComplexTransform.preservingCallWithBadOutput(plan,spectrum),'RealToComplexTransform:DimensionMismatch');
+            lifetime = fftw_r2c('lifetime');
+            testCase.verifyEqual(lifetime(7:10),[1 0 1 16*prod(complexSize)]);
+
+            fftw_r2c('free',plan);
+            clear cleanup
+            lifetime = fftw_r2c('lifetime');
+            testCase.verifyEqual(lifetime(7:10),[1 1 0 0]);
         end
 
         function testAlignmentModes(testCase)
@@ -225,6 +283,10 @@ classdef TestRealToComplexTransform < matlab.unittest.TestCase
             output = zeros(sz);
             output = fftw_r2c('inversePreserving',plan,spectrum,'preallocated',output);
             [metrics,pointers] = fftw_r2c('metrics',plan);
+        end
+
+        function preservingCallWithBadOutput(plan,spectrum)
+            output = fftw_r2c('inversePreserving',plan,spectrum,'preallocated',zeros(7,6,3)); %#ok<NASGU>
         end
 
         function [metrics,spectrumAlias,outputAlias,spectrum,output] = aliasedDestructiveCall(plan,referenceSpectrum,sz)

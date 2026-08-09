@@ -25,9 +25,10 @@ roundTrip = transform.scaleFactor*transform.transformBack(spectrum);
 
 FFTW's complex-to-real operation is unnormalized. `scaleFactor` is the
 reciprocal product of the transformed dimension lengths. Preserving inverse
-calls leave their input unchanged by making exactly one half-spectrum copy.
-The destructive inverse makes no explicit spectrum copy for uniquely owned
-storage:
+calls leave their input unchanged by lazily allocating reusable scratch on the
+first preserving call and making exactly one half-spectrum copy. Plan creation,
+forward transforms, and destructive-only use retain no spectrum-sized scratch.
+The destructive inverse makes no explicit spectrum copy for uniquely owned storage:
 
 ```matlab
 [spectrum,values] = transform.transformBackIntoArrayDestructive(spectrum,values);

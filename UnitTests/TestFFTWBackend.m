@@ -44,6 +44,10 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
             testCase.verifyFalse(capabilities.build.attempted);
             testCase.verifyFalse(capabilities.build.isRequired);
             testCase.verifyTrue(capabilities.build.isPossible);
+            testCase.verifyEqual(capabilities.memory.preservingInverseScratch.policy,"lazy-on-first-preserving-c2r");
+            testCase.verifyEqual(capabilities.memory.preservingInverseScratch.allocatedBytesAtPlanCreation,0);
+            testCase.verifyEqual(capabilities.memory.preservingInverseScratch.allocatedBytesForDestructiveOnlyUse,0);
+            testCase.verifyEqual(capabilities.memory.preservingInverseScratch.bytesPerComplexElement,16);
             testCase.verifyNumElements(capabilities.eligibility.realToReal.records,40);
         end
 

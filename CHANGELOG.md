@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Allocate preserving c2r scratch lazily so construction, r2c, and
+  destructive-only c2r retain no spectrum-sized scratch.
 - Preserve fixed benchmark history and add authoring/exported-package release gates.
 
 - Extracted the FFTW transform history from GLNumericalModelingKit into a
@@ -19,4 +21,3 @@
 
 ## [1.0.0] - 2026-08-08
 - Initial release with zero-copy r2c/c2r, DCT-I/DST-I, and validated MATLAB-bundled FFTW capability detection.
-

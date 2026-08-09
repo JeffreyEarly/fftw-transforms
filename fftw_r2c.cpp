@@ -40,6 +40,8 @@ struct Metrics {
     double outputAlignment = 0;
     double destroyedInput = 0;
     double persistentScratchBytes = 0;
+    double scratchAllocationSeconds = 0;
+    double scratchAllocatedThisCall = 0;
     uintptr_t inputBefore = 0;
     uintptr_t inputMutable = 0;
     uintptr_t outputBefore = 0;
@@ -85,6 +87,8 @@ class MexFunction : public matlab::mex::Function {
     size_t plansFreed = 0;
     size_t matlabBuffersCreated = 0;
     size_t matlabBuffersWrapped = 0;
+    size_t preservingScratchCreated = 0;
+    size_t preservingScratchFreed = 0;
 
     [[noreturn]] void fail(const std::string& identifier, const std::string& message) {
         matlabPtr->feval(u"error",0,{factory.createScalar(identifier),factory.createScalar(message)});
@@ -110,6 +114,26 @@ class MexFunction : public matlab::mex::Function {
         const int expectedInput = forward ? handle->forwardInputAlignment : handle->inverseInputAlignment;
         const int expectedOutput = forward ? handle->forwardOutputAlignment : handle->inverseOutputAlignment;
         require(inputAlignment == expectedInput && outputAlignment == expectedOutput,"RealToComplexTransform:AlignmentMismatch","The input or output alignment class differs from the matched FFTW plan; rebuild with alignmentMode=\"unaligned\" for arbitrary arrays.");
+    }
+
+    double preservingScratchBytes(const PlanHandle* handle) const {
+        return handle->complexScratch ? static_cast<double>(handle->complexElements*sizeof(fftw_complex)) : 0;
+    }
+
+    void ensurePreservingScratch(PlanHandle* handle, Metrics& metrics) {
+        if (handle->complexScratch) return;
+        const auto allocationStart = Clock::now();
+        ScratchBuffer scratch = alignedBuffer(2*handle->complexElements,handle->inverseInputAlignment);
+        handle->complexScratchBase = scratch.base;
+        handle->complexScratch = reinterpret_cast<fftw_complex*>(scratch.data);
+        ++preservingScratchCreated;
+        metrics.scratchAllocationSeconds = elapsedSeconds(allocationStart,Clock::now());
+        metrics.scratchAllocatedThisCall = 1;
+    }
+
+    void destroyTrackedPlan(PlanHandle* handle) {
+        if (handle && handle->complexScratch) ++preservingScratchFreed;
+        destroyPlan(handle);
     }
 
     fftw_plan createPlan(const PlanHandle& handle, double* realData, fftw_complex* complexData, unsigned flags, bool forward) {
@@ -172,9 +196,6 @@ class MexFunction : public matlab::mex::Function {
             handle->inverse = createTimedPlan(false);
             fftw_set_timelimit(FFTW_NO_TIMELIMIT);
             require(handle->forward && handle->inverse,"RealToComplexTransform:PlanCreationFailed","FFTW failed to create the forward or inverse plan.");
-            handle->complexScratchBase = complexScratch.base;
-            handle->complexScratch = reinterpret_cast<fftw_complex*>(complexScratch.data);
-            complexScratch.base = nullptr;
         } catch (...) {
             fftw_set_timelimit(FFTW_NO_TIMELIMIT);
             if (realScratch.base) fftw_free(realScratch.base);
@@ -183,6 +204,7 @@ class MexFunction : public matlab::mex::Function {
             throw;
         }
         fftw_free(realScratch.base);
+        fftw_free(complexScratch.base);
 
         PlanHandle* raw = handle.release();
         const uint64_t token = reinterpret_cast<uint64_t>(raw);
@@ -206,7 +228,7 @@ class MexFunction : public matlab::mex::Function {
         } catch (...) {
             livePlans.erase(token);
             ++plansFreed;
-            destroyPlan(raw);
+            destroyTrackedPlan(raw);
             mexUnlock();
             throw;
         }
@@ -216,7 +238,7 @@ class MexFunction : public matlab::mex::Function {
         require(inputs.size() == 2,"RealToComplexTransform:InvalidInputCount","free expects a plan handle.");
         const uint64_t token = static_cast<uint64_t>(inputs[1][0]);
         if (token == 0 || livePlans.erase(token) == 0) return;
-        destroyPlan(reinterpret_cast<PlanHandle*>(token));
+        destroyTrackedPlan(reinterpret_cast<PlanHandle*>(token));
         ++plansFreed;
         mexUnlock();
     }
@@ -233,7 +255,7 @@ class MexFunction : public matlab::mex::Function {
         metrics.inputBefore = reinterpret_cast<uintptr_t>(input);
         metrics.inputMutable = metrics.inputBefore;
         metrics.inputAlignment = fftw_alignment_of(const_cast<double*>(input));
-        metrics.persistentScratchBytes = static_cast<double>(handle->complexElements*sizeof(fftw_complex));
+        metrics.persistentScratchBytes = preservingScratchBytes(handle);
         const auto internalStart = Clock::now();
 
         if (mode == "allocating") {
@@ -298,8 +320,9 @@ class MexFunction : public matlab::mex::Function {
         metrics.inputBefore = reinterpret_cast<uintptr_t>(input);
         metrics.inputMutable = metrics.inputBefore;
         metrics.inputAlignment = fftw_alignment_of(reinterpret_cast<double*>(const_cast<std::complex<double>*>(input)));
-        metrics.persistentScratchBytes = static_cast<double>(handle->complexElements*sizeof(fftw_complex));
         const auto internalStart = Clock::now();
+        ensurePreservingScratch(handle,metrics);
+        metrics.persistentScratchBytes = preservingScratchBytes(handle);
         const auto copyStart = Clock::now();
         std::memcpy(handle->complexScratch,input,handle->complexElements*sizeof(fftw_complex));
         metrics.memcpySeconds = elapsedSeconds(copyStart,Clock::now());
@@ -354,7 +377,7 @@ class MexFunction : public matlab::mex::Function {
         validateDimensions(inputs[2].getDimensions(),handle->complexDimensions,"Destructive inverse input");
         validateDimensions(inputs[3].getDimensions(),handle->realDimensions,"Destructive inverse output");
         Metrics metrics;
-        metrics.persistentScratchBytes = static_cast<double>(handle->complexElements*sizeof(fftw_complex));
+        metrics.persistentScratchBytes = preservingScratchBytes(handle);
         metrics.inputBefore = reinterpret_cast<uintptr_t>(readPointer<std::complex<double>>(inputs[2]));
         metrics.outputBefore = reinterpret_cast<uintptr_t>(readPointer<double>(inputs[3]));
         const auto internalStart = Clock::now();
@@ -396,7 +419,7 @@ class MexFunction : public matlab::mex::Function {
         require(outputs.size() >= 1 && outputs.size() <= 2,"RealToComplexTransform:InvalidOutputCount","metrics returns values and optional pointer tokens.");
         PlanHandle* handle = handleFrom(inputs[1]);
         const Metrics& m = handle->lastMetrics;
-        const std::vector<double> values = {m.allocationSeconds,m.wrapSeconds,m.memcpySeconds,m.detachSeconds,m.kernelSeconds,m.internalSeconds,m.allocationCount,m.allocatedBytes,m.explicitCopyCount,m.explicitCopiedBytes,m.detectedCopyCount,m.detectedCopiedBytes,m.inputAlignment,m.outputAlignment,m.destroyedInput,m.persistentScratchBytes,static_cast<double>(livePlans.size())};
+        const std::vector<double> values = {m.allocationSeconds,m.wrapSeconds,m.memcpySeconds,m.detachSeconds,m.kernelSeconds,m.internalSeconds,m.allocationCount,m.allocatedBytes,m.explicitCopyCount,m.explicitCopiedBytes,m.detectedCopyCount,m.detectedCopiedBytes,m.inputAlignment,m.outputAlignment,m.destroyedInput,m.persistentScratchBytes,static_cast<double>(livePlans.size()),m.scratchAllocationSeconds,m.scratchAllocatedThisCall};
         outputs[0] = factory.createArray<double>({1,values.size()},values.data(),values.data()+values.size());
         if (outputs.size() > 1) {
             const std::vector<uint64_t> pointers = {static_cast<uint64_t>(m.inputBefore),static_cast<uint64_t>(m.inputMutable),static_cast<uint64_t>(m.outputBefore),static_cast<uint64_t>(m.outputMutable),static_cast<uint64_t>(m.wrappedPointer)};
@@ -415,7 +438,9 @@ class MexFunction : public matlab::mex::Function {
 
     void lifetime(ArgumentList outputs) {
         require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","lifetime returns one counter vector.");
-        outputs[0] = factory.createArray<double>({1,6},{static_cast<double>(plansCreated),static_cast<double>(plansFreed),static_cast<double>(livePlans.size()),static_cast<double>(matlabBuffersCreated),static_cast<double>(matlabBuffersWrapped),static_cast<double>(livePlans.size())});
+        double currentScratchBytes = 0;
+        for (uint64_t token : livePlans) currentScratchBytes += preservingScratchBytes(reinterpret_cast<PlanHandle*>(token));
+        outputs[0] = factory.createArray<double>({1,10},{static_cast<double>(plansCreated),static_cast<double>(plansFreed),static_cast<double>(livePlans.size()),static_cast<double>(matlabBuffersCreated),static_cast<double>(matlabBuffersWrapped),static_cast<double>(livePlans.size()),static_cast<double>(preservingScratchCreated),static_cast<double>(preservingScratchFreed),static_cast<double>(preservingScratchCreated-preservingScratchFreed),currentScratchBytes});
     }
 
     void resetLifetime(ArgumentList inputs) {
@@ -425,12 +450,22 @@ class MexFunction : public matlab::mex::Function {
         plansFreed = 0;
         matlabBuffersCreated = 0;
         matlabBuffersWrapped = 0;
+        preservingScratchCreated = 0;
+        preservingScratchFreed = 0;
     }
 
     void planInfo(ArgumentList outputs, ArgumentList inputs) {
         require(outputs.size() == 1,"RealToComplexTransform:InvalidOutputCount","planInfo returns one numeric record.");
         PlanHandle* handle = handleFrom(inputs[1]);
-        outputs[0] = factory.createArray<double>({1,7},{static_cast<double>(handle->realElements),static_cast<double>(handle->complexElements),static_cast<double>(handle->complexElements*sizeof(fftw_complex)),handle->planningSeconds,static_cast<double>(handle->planningLimitReached),static_cast<double>(handle->forwardInputAlignment),static_cast<double>(handle->forwardOutputAlignment)});
+        outputs[0] = factory.createArray<double>({1,8},{static_cast<double>(handle->realElements),static_cast<double>(handle->complexElements),static_cast<double>(handle->complexElements*sizeof(fftw_complex)),handle->planningSeconds,static_cast<double>(handle->planningLimitReached),static_cast<double>(handle->forwardInputAlignment),static_cast<double>(handle->forwardOutputAlignment),preservingScratchBytes(handle)});
+    }
+
+    void scratchInfo(ArgumentList outputs, ArgumentList inputs) {
+        require(outputs.size() == 2,"RealToComplexTransform:InvalidOutputCount","scratchInfo returns the policy and byte record.");
+        require(inputs.size() == 2,"RealToComplexTransform:InvalidInputCount","scratchInfo expects a plan handle.");
+        PlanHandle* handle = handleFrom(inputs[1]);
+        outputs[0] = factory.createScalar("lazy-on-first-preserving-c2r");
+        outputs[1] = factory.createArray<double>({1,2},{static_cast<double>(handle->complexElements*sizeof(fftw_complex)),preservingScratchBytes(handle)});
     }
 
     void alignmentSelfTest(ArgumentList outputs) {
@@ -456,7 +491,7 @@ class MexFunction : public matlab::mex::Function {
 
 public:
     ~MexFunction() override {
-        for (uint64_t token : livePlans) destroyPlan(reinterpret_cast<PlanHandle*>(token));
+        for (uint64_t token : livePlans) destroyTrackedPlan(reinterpret_cast<PlanHandle*>(token));
         livePlans.clear();
     }
 
@@ -473,6 +508,7 @@ public:
         else if (command == "lifetime") lifetime(outputs);
         else if (command == "resetLifetime") resetLifetime(inputs);
         else if (command == "planInfo") planInfo(outputs,inputs);
+        else if (command == "scratchInfo") scratchInfo(outputs,inputs);
         else if (command == "alignmentSelfTest") alignmentSelfTest(outputs);
         else if (command == "forgetWisdom") fftw_forget_wisdom();
         else if (command == "info") info(outputs);
