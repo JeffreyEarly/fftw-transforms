@@ -42,6 +42,22 @@ classdef TestFFTWBackendPortable < matlab.unittest.TestCase
             testCase.verifyFalse(result.build.isPossible);
             TestFFTWBackendPortable.verifyUnavailableFeatures(testCase,result,"unsupported-architecture");
         end
+
+        function testUnsupportedPlatformSkipsEnvironmentServices(testCase)
+            context = TestableFFTWBackend.context();
+            context.release = "unsupported";
+            context.pathResolver = @TestableFFTWBackend.failIfPathResolved;
+            context.compilerInspector = @TestableFFTWBackend.failIfCompilerInspected;
+            result = TestableFFTWBackend.inspect(context);
+            testCase.verifyEqual(result.reason.code,"unsupported-release");
+            testCase.verifyFalse(result.compiler.isAvailable);
+            testCase.verifyFalse(result.library.exists);
+
+            buildResult = TestableFFTWBackend.buildUsing(context);
+            testCase.verifyEqual(buildResult.reason.code,"unsupported-release");
+            testCase.verifyEqual(buildResult.build.reason.code,"unsupported-platform");
+            testCase.verifyFalse(buildResult.build.succeeded);
+        end
     end
 
     methods (Static, Access=private)

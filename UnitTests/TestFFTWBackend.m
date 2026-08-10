@@ -118,6 +118,67 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
             end
         end
 
+        function testCanonicalPathResolution(testCase)
+            import matlab.unittest.fixtures.TemporaryFolderFixture
+            fixture = testCase.applyFixture(TemporaryFolderFixture);
+            unusualDirectory = fullfile(string(fixture.Folder),"space ' ; $() [path]");
+            mkdir(unusualDirectory);
+            existingFile = fullfile(unusualDirectory,"existing file.txt");
+            fileId = fopen(existingFile,'w');
+            fclose(fileId);
+
+            [resolved,code,message] = TestableFFTWBackend.resolvePath(existingFile);
+            testCase.verifyEqual(code,"");
+            testCase.verifyEqual(message,"");
+            testCase.verifyTrue(isfile(resolved));
+            testCase.verifyTrue(endsWith(resolved,"space ' ; $() [path]/existing file.txt"));
+
+            missingFile = fullfile(unusualDirectory,"missing","..","module output.mexmaca64");
+            [resolvedMissing,code,message] = TestableFFTWBackend.resolvePath(missingFile);
+            testCase.verifyEqual(code,"");
+            testCase.verifyEqual(message,"");
+            testCase.verifyEqual(resolvedMissing,fullfile(string(fileparts(resolved)),"module output.mexmaca64"));
+
+            linkPath = fullfile(string(fixture.Folder),"directory-link");
+            [status,output] = system("/bin/ln -s "+TestFFTWBackend.shellQuote(unusualDirectory)+" "+TestFFTWBackend.shellQuote(linkPath));
+            testCase.assertEqual(status,0,string(output));
+            [resolvedLink,code] = TestableFFTWBackend.resolvePath(fullfile(linkPath,"existing file.txt"));
+            testCase.verifyEqual(code,"");
+            testCase.verifyEqual(resolvedLink,resolved);
+
+            previousDirectory = pwd;
+            directoryCleanup = onCleanup(@() cd(previousDirectory));
+            cd(fixture.Folder);
+            [resolvedRelative,code] = TestableFFTWBackend.resolvePath(fullfile(".","directory-link","..","directory-link","existing file.txt"));
+            testCase.verifyEqual(code,"");
+            testCase.verifyEqual(resolvedRelative,resolved);
+            clear directoryCleanup
+        end
+
+        function testStructuredPathResolutionFailures(testCase)
+            context = TestableFFTWBackend.context();
+            context.pathResolver = @TestableFFTWBackend.unavailablePathResolver;
+            unavailable = TestableFFTWBackend.inspect(context);
+            testCase.verifyEqual(unavailable.status,"unavailable");
+            testCase.verifyEqual(unavailable.reason.code,"path-resolution-unavailable");
+            testCase.verifyEqual(unavailable.reason.stage,"path-resolution");
+            testCase.verifyFalse(unavailable.build.isPossible);
+            for featureName = ["r2c","c2r","dct1","dst1"]
+                testCase.verifyEqual(unavailable.features.(featureName).reason.code,"path-resolution-unavailable");
+            end
+            unavailableBuild = TestableFFTWBackend.buildUsing(context);
+            testCase.verifyEqual(unavailableBuild.build.reason.code,"path-resolution-unavailable");
+            testCase.verifyFalse(unavailableBuild.build.succeeded);
+
+            context.pathResolver = @TestableFFTWBackend.failedPathResolver;
+            failed = TestableFFTWBackend.inspect(context);
+            testCase.verifyEqual(failed.reason.code,"path-resolution-failed");
+            testCase.verifyFalse(failed.build.isPossible);
+            failedBuild = TestableFFTWBackend.buildUsing(context);
+            testCase.verifyEqual(failedBuild.build.reason.code,"path-resolution-failed");
+            testCase.verifyFalse(failedBuild.build.succeeded);
+        end
+
         function testProviderNeutralOrchestrationAndStateRestoration(testCase)
             previousDirectory = pwd;
             previousPath = path;
@@ -264,6 +325,10 @@ classdef TestFFTWBackend < matlab.unittest.TestCase
         function wisdom = canonicalWisdom(wisdom)
             lines = strip(splitlines(string(wisdom)));
             wisdom = sort(lines(strlength(lines) > 0));
+        end
+
+        function value = shellQuote(value)
+            value = "'"+replace(string(value),"'","'""'""'")+"'";
         end
     end
 end

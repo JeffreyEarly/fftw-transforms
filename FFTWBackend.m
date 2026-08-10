@@ -56,6 +56,8 @@ classdef FFTWBackend
             context.moduleDirectory = string(sourceDirectory);
             context.mexExtension = string(mexext);
             context.provider = FFTWBackend.bundledProvider(context);
+            context.pathResolver = @FFTWBackend.resolveCanonicalPath;
+            context.compilerInspector = @FFTWBackend.compilerRecord;
             context.errorTolerance = 1e-12;
             context.failureInjection = "";
         end
@@ -78,8 +80,18 @@ classdef FFTWBackend
             stateCleanup = onCleanup(@() FFTWBackend.restoreMatlabState(state));
             buildStart = tic;
             startedAtUTC = FFTWBackend.utcTimestamp;
+            capabilities = FFTWBackend.inspectCapabilities(context);
+            if ~capabilities.platform.isSupported
+                capabilities.build.attempted = true;
+                capabilities.build.succeeded = false;
+                capabilities.build.startedAtUTC = startedAtUTC;
+                capabilities.build.completedAtUTC = FFTWBackend.utcTimestamp;
+                capabilities.build.durationSeconds = toc(buildStart);
+                capabilities.build.reason = FFTWBackend.reason("unsupported-platform","build","","FFTWBackend:UnsupportedPlatform",capabilities.reason.message);
+                clear stateCleanup
+                return
+            end
             if FFTWBackend.hasLivePlans("fftw_r2c") || FFTWBackend.hasLivePlans("fftw_r2r")
-                capabilities = FFTWBackend.emptyCapabilities(context);
                 capabilities.reason = FFTWBackend.reason("module-in-use","build","","FFTWBackend:ModuleInUse","An FFTW MEX module is locked by a live transform. Delete all transforms before rebuilding.");
                 capabilities.build.attempted = true;
                 capabilities.build.succeeded = false;
@@ -90,7 +102,6 @@ classdef FFTWBackend
                 clear stateCleanup
                 return
             end
-            capabilities = FFTWBackend.inspectCapabilities(context);
             capabilities.build.attempted = true;
             capabilities.build.startedAtUTC = startedAtUTC;
             installStarted = false;
@@ -193,14 +204,6 @@ classdef FFTWBackend
         end
 
         function capabilities = inspectCapabilities(context)
-            if FFTWBackend.canonicalPath(context.moduleDirectory) ~= FFTWBackend.canonicalPath(context.sourceDirectory)
-                previousPath = path;
-                pathCleanup = onCleanup(@() path(previousPath));
-                previousDirectory = pwd;
-                directoryCleanup = onCleanup(@() FFTWBackend.changeDirectoryWithoutWarnings(previousDirectory));
-                addpath(context.moduleDirectory,'-begin');
-                cd(context.moduleDirectory);
-            end
             capabilities = FFTWBackend.emptyCapabilities(context);
 
             if context.release ~= context.provider.supportedReleases
@@ -216,6 +219,7 @@ classdef FFTWBackend
                 return
             end
             capabilities.platform.isSupported = true;
+            capabilities.compiler = context.compilerInspector();
             if context.failureInjection == "compiler-unavailable"
                 capabilities.compiler.isAvailable = false;
             end
@@ -224,7 +228,31 @@ classdef FFTWBackend
                 capabilities.build.isPossible = false;
             end
 
-            expectedLibrary = FFTWBackend.canonicalPath(context.provider.libraryPath);
+            [sourceDirectory,pathReason] = FFTWBackend.resolvePath(context,context.sourceDirectory,"source-directory");
+            if strlength(pathReason.code) > 0
+                capabilities = FFTWBackend.failPathResolution(capabilities,pathReason);
+                return
+            end
+            [moduleDirectory,pathReason] = FFTWBackend.resolvePath(context,context.moduleDirectory,"module-directory");
+            if strlength(pathReason.code) > 0
+                capabilities = FFTWBackend.failPathResolution(capabilities,pathReason);
+                return
+            end
+            if moduleDirectory ~= sourceDirectory
+                previousPath = path;
+                pathCleanup = onCleanup(@() path(previousPath));
+                previousDirectory = pwd;
+                directoryCleanup = onCleanup(@() FFTWBackend.changeDirectoryWithoutWarnings(previousDirectory));
+                addpath(moduleDirectory,'-begin');
+                cd(moduleDirectory);
+            end
+
+            [expectedLibrary,pathReason] = FFTWBackend.resolvePath(context,context.provider.libraryPath,"bundled-library");
+            if strlength(pathReason.code) > 0
+                capabilities = FFTWBackend.failPathResolution(capabilities,pathReason);
+                clear pathCleanup
+                return
+            end
             capabilities.library.expectedPath = expectedLibrary;
             libraryExists = isfile(expectedLibrary) && context.failureInjection ~= "library-missing";
             capabilities.library.exists = libraryExists;
@@ -279,7 +307,11 @@ classdef FFTWBackend
         function module = inspectModule(name,context,expectedLibrary)
             module = FFTWBackend.emptyModule(name);
             expectedPath = fullfile(context.moduleDirectory,name+"."+context.mexExtension);
-            module.expectedPath = FFTWBackend.canonicalPath(expectedPath);
+            [module.expectedPath,pathReason] = FFTWBackend.resolvePath(context,expectedPath,name+"-expected-path");
+            if strlength(pathReason.code) > 0
+                module.reason = pathReason;
+                return
+            end
             missingInjection = context.failureInjection == name+"-missing";
             if ~isfile(expectedPath) || missingInjection
                 module.reason = FFTWBackend.reason("mex-missing","module",name,"",sprintf('%s is not built at %s.',name,expectedPath));
@@ -289,7 +321,11 @@ classdef FFTWBackend
             if context.failureInjection == "unexpected-module-path"
                 resolvedModule = fullfile(tempdir,name+"."+context.mexExtension);
             end
-            module.path = FFTWBackend.canonicalPath(resolvedModule);
+            [module.path,pathReason] = FFTWBackend.resolvePath(context,resolvedModule,name+"-resolved-path");
+            if strlength(pathReason.code) > 0
+                module.reason = pathReason;
+                return
+            end
             module.exists = true;
             if module.path ~= module.expectedPath
                 module.reason = FFTWBackend.reason("unexpected-module-path","module",name,"",sprintf('%s resolved to %s instead of %s.',name,module.path,module.expectedPath));
@@ -302,7 +338,11 @@ classdef FFTWBackend
                 [versionText,libraryPath] = feval(name,'info');
                 module.loaded = true;
                 module.libraryVersion = string(versionText);
-                module.libraryPath = FFTWBackend.canonicalPath(string(libraryPath));
+                [module.libraryPath,pathReason] = FFTWBackend.resolvePath(context,string(libraryPath),name+"-loaded-library");
+                if strlength(pathReason.code) > 0
+                    module.reason = pathReason;
+                    return
+                end
                 if context.failureInjection == "library-mismatch"
                     module.libraryPath = fullfile(tempdir,"libfftw3.dylib");
                 end
@@ -433,6 +473,11 @@ classdef FFTWBackend
             if ~capabilities.platform.isSupported
                 error('FFTWBackend:UnsupportedPlatform','%s',capabilities.reason.message);
             end
+            if capabilities.reason.code == "path-resolution-unavailable"
+                error('FFTWBackend:PathResolutionUnavailable','%s',capabilities.reason.message);
+            elseif capabilities.reason.code == "path-resolution-failed"
+                error('FFTWBackend:PathResolutionFailed','%s',capabilities.reason.message);
+            end
             if ~capabilities.compiler.isAvailable
                 error('FFTWBackend:CompilerUnavailable','No selected MATLAB C++ MEX compiler is available.');
             end
@@ -491,9 +536,9 @@ classdef FFTWBackend
             capabilities.provider.isDefault = context.provider.isDefault;
             capabilities.provider.distributionPolicy = context.provider.distributionPolicy;
             capabilities.provider.identityValidated = false;
-            capabilities.compiler = FFTWBackend.compilerRecord;
-            capabilities.library.expectedPath = FFTWBackend.canonicalPath(context.provider.libraryPath);
-            capabilities.library.exists = isfile(context.provider.libraryPath);
+            capabilities.compiler = FFTWBackend.emptyCompiler;
+            capabilities.library.expectedPath = string(context.provider.libraryPath);
+            capabilities.library.exists = false;
             capabilities.library.resolvedPath = "";
             capabilities.library.version = "";
             capabilities.library.identityValidated = false;
@@ -533,6 +578,12 @@ classdef FFTWBackend
                 end
             catch
             end
+        end
+
+        function compiler = emptyCompiler()
+            compiler.name = "";
+            compiler.version = "";
+            compiler.isAvailable = false;
         end
 
         function module = emptyModule(name)
@@ -694,13 +745,83 @@ classdef FFTWBackend
             end
         end
 
-        function path = canonicalPath(path)
-            if strlength(string(path)) == 0, path = ""; return, end
+        function [resolved,reason] = resolvePath(context,path,component)
             try
-                path = string(java.io.File(char(path)).getCanonicalPath());
-            catch
-                path = string(path);
+                [resolved,code,message] = context.pathResolver(path);
+                resolved = string(resolved);
+                code = string(code);
+                message = string(message);
+                if strlength(code) > 0
+                    reason = FFTWBackend.reason(code,"path-resolution",component,"",message);
+                else
+                    reason = FFTWBackend.emptyReason;
+                end
+            catch exception
+                resolved = "";
+                reason = FFTWBackend.reason("path-resolution-failed","path-resolution",component,string(exception.identifier),string(exception.message));
             end
+        end
+
+        function capabilities = failPathResolution(capabilities,reason)
+            capabilities.reason = reason;
+            capabilities = FFTWBackend.propagateUnavailableReason(capabilities,reason);
+            capabilities.build.isPossible = false;
+        end
+
+        function [resolved,code,message] = resolveCanonicalPath(path)
+            resolved = "";
+            code = "";
+            message = "";
+            path = string(path);
+            if ~isscalar(path) || ismissing(path) || strlength(path) == 0
+                code = "path-resolution-failed";
+                message = "A nonempty scalar path is required.";
+                return
+            end
+            resolver = "/bin/realpath";
+            if ~isfile(resolver)
+                code = "path-resolution-unavailable";
+                message = "The required macOS path resolver /bin/realpath is unavailable.";
+                return
+            end
+            if ~startsWith(path,filesep)
+                path = fullfile(string(pwd),path);
+            end
+            existing = path;
+            unresolved = strings(1,0);
+            while ~isfile(existing) && ~isfolder(existing)
+                [parent,leaf,extension] = fileparts(existing);
+                if strlength(parent) == 0 || parent == existing
+                    code = "path-resolution-failed";
+                    message = "No existing ancestor could be found for "+path+".";
+                    return
+                end
+                unresolved = [leaf+extension unresolved]; %#ok<AGROW>
+                existing = string(parent);
+            end
+            command = resolver+" -- "+FFTWBackend.shellQuote(existing);
+            [status,output] = system(command);
+            lines = strip(splitlines(string(output)));
+            lines = lines(strlength(lines) > 0);
+            if status ~= 0 || numel(lines) ~= 1 || ~startsWith(lines,filesep)
+                code = "path-resolution-failed";
+                message = sprintf('Unable to resolve %s with /bin/realpath (status %d).',path,status);
+                return
+            end
+            resolved = lines;
+            for leaf = unresolved
+                if leaf == "."
+                    continue
+                elseif leaf == ".."
+                    resolved = string(fileparts(resolved));
+                else
+                    resolved = fullfile(resolved,leaf);
+                end
+            end
+        end
+
+        function quoted = shellQuote(value)
+            quoted = "'"+replace(string(value),"'","'""'""'")+"'";
         end
 
         function changeDirectoryWithoutWarnings(directory)
@@ -719,6 +840,10 @@ classdef FFTWBackend
                     code = "compiler-unavailable";
                 case "FFTWBackend:LibraryMissing"
                     code = "bundled-library-missing";
+                case "FFTWBackend:PathResolutionUnavailable"
+                    code = "path-resolution-unavailable";
+                case "FFTWBackend:PathResolutionFailed"
+                    code = "path-resolution-failed";
                 case "FFTWBackend:InjectedCompileFailure"
                     code = "compile-failed";
                 case "FFTWBackend:StagingFailed"

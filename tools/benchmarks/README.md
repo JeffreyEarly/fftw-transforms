@@ -9,6 +9,17 @@ exported MPM payload. Production MATLAB classes and MEX sources live at the
 repository root. Use `fftwBenchmarkPaths` from authoring tools instead of
 assuming a current working directory or the former GL repository layout.
 
+`runFFTWCapabilityMemoryBenchmark` compares the released `v1.0.2` capability
+path with a clean candidate commit in fresh MATLAB processes. It samples RSS
+externally at lifecycle handshakes and records `vmmap` evidence for Java runtime
+and heap regions. The default command runs three no-query, explicit-Java,
+compiler-discovery, and complete FFTW lifecycle processes per implementation:
+
+```matlab
+addpath("tools/benchmarks");
+runFFTWCapabilityMemoryBenchmark
+```
+
 The canonical measurements are preserved byte-for-byte. Their fixed hashes,
 original GL issues and commits, filtered FFTWTransforms commits, library
 identities, and recorded working-tree state are listed in

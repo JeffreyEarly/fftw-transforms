@@ -8,6 +8,8 @@ nav_order: 100
 
 ## Unreleased
 
+- Resolve capability paths without initializing the JVM while preserving exact
+  MEX-module and loaded-library identity validation.
 - Allocate preserving c2r scratch lazily so construction, r2c, and
   destructive-only c2r retain no spectrum-sized scratch.
 - Preserve fixed benchmark history and add authoring/exported-package release gates.
